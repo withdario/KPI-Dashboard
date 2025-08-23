@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: bi-postgres
+    environment:
+      POSTGRES_DB: business_intelligence
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d
+    networks:
+      - bi-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: bi-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - bi-network
+
+  backend:
+    build:
+      context: ./packages/backend
+      dockerfile: Dockerfile.dev
+    container_name: bi-backend
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/business_intelligence
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: dev-jwt-secret-change-in-production
+      # ALLOWED_WEBHOOK_IPS: ""
+    volumes:
+      - ./packages/backend:/app
+      - /app/node_modules
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - bi-network
+    command: npm run dev
+
+  frontend:
+    build:
+      context: ./packages/frontend
+      dockerfile: Dockerfile.dev
+    container_name: bi-frontend
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: development
+      REACT_APP_API_URL: http://localhost:3000
+    volumes:
+      - ./packages/frontend:/app
+      - /app/node_modules
+    networks:
+      - bi-network
+    command: npm run dev
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  bi-network:
+    driver: bridge
