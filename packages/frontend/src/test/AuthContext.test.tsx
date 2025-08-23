@@ -19,7 +19,7 @@ const TestComponent = () => {
       <button data-testid="login-btn" onClick={() => login('test@example.com', 'password')}>
         Login
       </button>
-      <button data-testid="logout-btn" onClick={logout}>
+      <button data-testid="logout-btn" onClick={() => logout()}>
         Logout
       </button>
     </div>
@@ -38,7 +38,18 @@ const TestWrapper = ({ children }: { children: React.ReactNode }) => (
 describe('AuthContext', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    localStorage.clear();
+    // Clear localStorage before each test
+    Object.defineProperty(window, 'localStorage', {
+      value: {
+        getItem: vi.fn(),
+        setItem: vi.fn(),
+        removeItem: vi.fn(),
+        clear: vi.fn(),
+        length: 0,
+        key: vi.fn(),
+      },
+      writable: true,
+    });
   });
 
   it('should provide initial state', () => {
@@ -54,9 +65,22 @@ describe('AuthContext', () => {
     expect(screen.getByTestId('error')).toHaveTextContent('no-error');
   });
 
-  it('should load token from localStorage on mount', () => {
+  it('should load token from localStorage on mount', async () => {
     const mockToken = 'test-token';
-    localStorage.setItem('token', mockToken);
+    
+    // Mock localStorage.getItem to return our token
+    const mockGetItem = vi.fn().mockReturnValue(mockToken);
+    Object.defineProperty(window, 'localStorage', {
+      value: {
+        getItem: mockGetItem,
+        setItem: vi.fn(),
+        removeItem: vi.fn(),
+        clear: vi.fn(),
+        length: 0,
+        key: vi.fn(),
+      },
+      writable: true,
+    });
     
     render(
       <TestWrapper>
@@ -65,7 +89,9 @@ describe('AuthContext', () => {
     );
 
     // Should start loading when token exists
-    expect(screen.getByTestId('loading')).toHaveTextContent('true');
+    await waitFor(() => {
+      expect(screen.getByTestId('loading')).toHaveTextContent('true');
+    });
   });
 
   it('should handle successful login', async () => {
@@ -82,6 +108,21 @@ describe('AuthContext', () => {
     (fetch as any).mockResolvedValueOnce({
       ok: true,
       json: async () => ({ user: mockUser, token: mockToken }),
+    });
+
+    // Mock localStorage methods
+    const mockSetItem = vi.fn();
+    const mockGetItem = vi.fn().mockReturnValue(null);
+    Object.defineProperty(window, 'localStorage', {
+      value: {
+        getItem: mockGetItem,
+        setItem: mockSetItem,
+        removeItem: vi.fn(),
+        clear: vi.fn(),
+        length: 0,
+        key: vi.fn(),
+      },
+      writable: true,
     });
 
     render(
@@ -102,7 +143,7 @@ describe('AuthContext', () => {
     });
 
     expect(screen.getByTestId('user-email')).toHaveTextContent('test@example.com');
-    expect(localStorage.getItem('token')).toBe(mockToken);
+    expect(mockSetItem).toHaveBeenCalledWith('token', mockToken);
   });
 
   it('should handle login failure', async () => {
@@ -134,14 +175,31 @@ describe('AuthContext', () => {
   });
 
   it('should handle logout', async () => {
-    // Set initial token and user state
-    localStorage.setItem('token', 'test-token');
+    // Mock localStorage methods
+    const mockRemoveItem = vi.fn();
+    const mockGetItem = vi.fn().mockReturnValue('test-token');
+    Object.defineProperty(window, 'localStorage', {
+      value: {
+        getItem: mockGetItem,
+        setItem: vi.fn(),
+        removeItem: mockRemoveItem,
+        clear: vi.fn(),
+        length: 0,
+        key: vi.fn(),
+      },
+      writable: true,
+    });
     
     render(
       <TestWrapper>
         <TestComponent />
       </TestWrapper>
     );
+
+    // Wait for initial loading to complete
+    await waitFor(() => {
+      expect(screen.getByTestId('loading')).toHaveTextContent('false');
+    });
 
     // Click logout button
     const logoutBtn = screen.getByTestId('logout-btn');
@@ -150,6 +208,6 @@ describe('AuthContext', () => {
     });
 
     // Verify token is removed on logout
-    expect(localStorage.getItem('token')).toBeNull();
+    expect(mockRemoveItem).toHaveBeenCalledWith('token');
   });
 });

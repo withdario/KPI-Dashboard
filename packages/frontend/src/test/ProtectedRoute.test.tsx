@@ -28,7 +28,18 @@ const TestWrapper = ({ children }: { children: React.ReactNode }) => (
 describe('ProtectedRoute', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    localStorage.clear();
+    // Clear localStorage before each test
+    Object.defineProperty(window, 'localStorage', {
+      value: {
+        getItem: vi.fn(),
+        setItem: vi.fn(),
+        removeItem: vi.fn(),
+        clear: vi.fn(),
+        length: 0,
+        key: vi.fn(),
+      },
+      writable: true,
+    });
   });
 
   it('should redirect to login when not authenticated', async () => {
@@ -50,7 +61,18 @@ describe('ProtectedRoute', () => {
 
   it('should render protected content when token exists', async () => {
     // Mock localStorage to simulate authenticated user BEFORE rendering
-    localStorage.setItem('token', 'test-token');
+    const mockGetItem = vi.fn().mockReturnValue('test-token');
+    Object.defineProperty(window, 'localStorage', {
+      value: {
+        getItem: mockGetItem,
+        setItem: vi.fn(),
+        removeItem: vi.fn(),
+        clear: vi.fn(),
+        length: 0,
+        key: vi.fn(),
+      },
+      writable: true,
+    });
     
     render(
       <TestWrapper>
@@ -60,9 +82,9 @@ describe('ProtectedRoute', () => {
       </TestWrapper>
     );
 
-    // Wait for the token validation to complete
+    // Wait for the token validation to complete (the useEffect runs asynchronously)
     await waitFor(() => {
       expect(screen.getByTestId('protected-content')).toBeInTheDocument();
-    });
+    }, { timeout: 2000 });
   });
 });
