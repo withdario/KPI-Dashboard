@@ -22,6 +22,7 @@
     "@google-cloud/local-auth": "^3.0.1",
     "@prisma/client": "^5.7.1",
     "@types/bcrypt": "^6.0.0",
+    "@types/node-cron": "^3.0.11",
     "bcrypt": "^6.0.0",
     "bcryptjs": "^2.4.3",
     "compression": "^1.7.4",
@@ -35,6 +36,7 @@
     "helmet": "^7.1.0",
     "hpp": "^0.2.3",
     "jsonwebtoken": "^9.0.2",
+    "node-cron": "^4.2.1",
     "nodemailer": "^6.9.7",
     "prisma": "^5.7.1",
     "redis": "^4.6.11",
@@ -68,6 +70,8 @@
     "node": ">=20.0.0"
   },
   "vercel": {
-    "entrypoint": "src/index.ts"
+    "buildCommand": "npm run build",
+    "outputDirectory": "dist",
+    "installCommand": "npm install"
   }
 }
