@@ -7,7 +7,6 @@ import {
   N8nWebhookProcessingResult,
   N8nMetrics,
   N8nIntegration,
-  N8nWebhookEvent,
   N8nActualPayload
 } from '../types/n8n';
 
@@ -391,14 +390,6 @@ export class N8nService {
     return validStatuses.includes(status as N8nWorkflowStatus);
   }
   
-  /**
-   * Validate date string
-   */
-  private isValidDate(dateString: string): boolean {
-    const date = new Date(dateString);
-    return !isNaN(date.getTime());
-  }
-
   /**
    * Validate timestamp string (ISO 8601)
    */

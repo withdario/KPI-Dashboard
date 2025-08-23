@@ -2,7 +2,6 @@ import { Router, Request, Response } from 'express';
 import { N8nService } from '../services/n8nService';
 import { 
   webhookRateLimit, 
-  webhookAuth, 
   webhookIpValidation, 
   webhookPayloadValidation,
   webhookSignatureValidation,
