@@ -10,14 +10,13 @@ import {
   N8nActualPayload
 } from '../types/n8n';
 
-const prisma = new PrismaClient();
-
-/**
- * n8n Webhook Integration Service
- * Handles webhook processing, data storage, and metrics calculation
- */
 export class N8nService {
-  
+  private prisma: PrismaClient;
+
+  constructor(prismaClient?: PrismaClient) {
+    this.prisma = prismaClient || new PrismaClient();
+  }
+
   /**
    * Validate webhook payload structure and data
    */
@@ -107,7 +106,7 @@ export class N8nService {
       if (process.env.NODE_ENV === 'development') {
         try {
           // Try to create webhook event record
-          const event = await prisma.n8nWebhookEvent.create({
+          const event = await this.prisma.n8nWebhookEvent.create({
             data: {
               n8nIntegrationId: integrationId,
               workflowId: payload.workflowId,
@@ -154,7 +153,7 @@ export class N8nService {
         }
       } else {
         // Production mode - proceed with normal database operations
-        const event = await prisma.n8nWebhookEvent.create({
+        const event = await this.prisma.n8nWebhookEvent.create({
           data: {
             n8nIntegrationId: integrationId,
             workflowId: payload.workflowId,
@@ -193,46 +192,45 @@ export class N8nService {
       };
     }
   }
-  
+
   /**
    * Update integration statistics
    */
-  private async updateIntegrationStats(integrationId: string): Promise<void> {
+  private async updateIntegrationStats(integrationId: string) {
     try {
-      const stats = await prisma.n8nWebhookEvent.groupBy({
-        by: ['n8nIntegrationId'],
+      const stats = await this.prisma.n8nWebhookEvent.groupBy({
+        by: ['status'],
         where: { n8nIntegrationId: integrationId },
-        _count: { id: true },
-        _max: { createdAt: true }
+        _count: { status: true }
       });
-      
-      if (stats.length > 0) {
-        await prisma.n8nIntegration.update({
-          where: { id: integrationId },
-          data: {
-            webhookCount: stats[0]._count.id,
-            lastWebhookAt: stats[0]._max.createdAt || new Date(),
-            lastErrorAt: null,
-            errorMessage: null
-          }
-        });
-      }
+
+      const totalEvents = stats.reduce((sum, stat) => sum + stat._count.status, 0);
+      const successfulEvents = stats.find(stat => stat.status === 'completed')?._count.status || 0;
+
+      await this.prisma.n8nIntegration.update({
+        where: { id: integrationId },
+        data: {
+          webhookCount: totalEvents,
+          lastWebhookAt: new Date(),
+          lastErrorAt: successfulEvents === totalEvents ? null : new Date()
+        }
+      });
     } catch (error) {
       console.error('Error updating integration stats:', error);
     }
   }
-  
+
   /**
-   * Calculate performance metrics for an integration
+   * Calculate metrics for an integration
    */
   async calculateMetrics(integrationId: string): Promise<N8nMetrics> {
     try {
-      const events = await prisma.n8nWebhookEvent.findMany({
+      const events = await this.prisma.n8nWebhookEvent.findMany({
         where: { n8nIntegrationId: integrationId },
         orderBy: { createdAt: 'desc' },
-        take: 1000 // Limit to last 1000 events for performance
+        take: 100
       });
-      
+
       if (events.length === 0) {
         return {
           totalWorkflows: 0,
@@ -243,66 +241,88 @@ export class N8nService {
           successRate: 0
         };
       }
-      
+
+      const successfulWorkflows = events.filter(e => e.status === 'completed').length;
+      const failedWorkflows = events.filter(e => e.status === 'failed').length;
       const totalWorkflows = events.length;
-      const successfulWorkflows = events.filter((e: any) => e.status === 'completed').length;
-      const failedWorkflows = events.filter((e: any) => e.status === 'failed').length;
-      
-      const completedEvents = events.filter((e: any) => e.duration && e.status === 'completed');
-      const averageExecutionTime = completedEvents.length > 0 
-        ? completedEvents.reduce((sum: number, e: any) => sum + (e.duration || 0), 0) / completedEvents.length
+      const successRate = totalWorkflows > 0 ? (successfulWorkflows / totalWorkflows) * 100 : 0;
+
+      const executionTimes = events
+        .filter(e => e.duration)
+        .map(e => e.duration!);
+
+      const averageExecutionTime = executionTimes.length > 0
+        ? executionTimes.reduce((sum, time) => sum + time, 0) / executionTimes.length
         : 0;
-      
-      const totalTimeSaved = completedEvents.reduce((sum: number, e: any) => sum + (e.duration || 0), 0);
-      const successRate = (successfulWorkflows / totalWorkflows) * 100;
-      
+
+      const totalTimeSaved = executionTimes.reduce((sum, time) => sum + time, 0);
+
       return {
         totalWorkflows,
         successfulWorkflows,
         failedWorkflows,
         averageExecutionTime,
         totalTimeSaved,
-        successRate,
-        lastExecutionAt: events[0]?.createdAt
+        successRate
       };
-      
     } catch (error) {
       console.error('Error calculating metrics:', error);
-      throw error;
+      return {
+        totalWorkflows: 0,
+        successfulWorkflows: 0,
+        failedWorkflows: 0,
+        averageExecutionTime: 0,
+        totalTimeSaved: 0,
+        successRate: 0
+      };
     }
   }
-  
+
   /**
    * Get integration by ID
    */
-  async getIntegration(integrationId: string): Promise<N8nIntegration | null> {
+  async getIntegrationById(integrationId: string): Promise<N8nIntegration | null> {
     try {
-      return await prisma.n8nIntegration.findUnique({
-        where: { id: integrationId }
+      return await this.prisma.n8nIntegration.findUnique({
+        where: { id: integrationId },
+        include: {
+          businessEntity: true,
+          webhookEvents: {
+            orderBy: { createdAt: 'desc' },
+            take: 10
+          }
+        }
       });
     } catch (error) {
-      console.error('Error getting n8n integration:', error);
-      throw error;
+      console.error('Error getting integration by ID:', error);
+      return null;
     }
   }
-  
+
   /**
    * Get integration by business entity ID
    */
   async getIntegrationByBusinessEntity(businessEntityId: string): Promise<N8nIntegration | null> {
     try {
-      return await prisma.n8nIntegration.findFirst({
+      return await this.prisma.n8nIntegration.findFirst({
         where: { 
           businessEntityId,
           isActive: true
+        },
+        include: {
+          businessEntity: true,
+          webhookEvents: {
+            orderBy: { createdAt: 'desc' },
+            take: 10
+          }
         }
       });
     } catch (error) {
-      console.error('Error getting n8n integration by business entity:', error);
-      throw error;
+      console.error('Error getting integration by business entity:', error);
+      return null;
     }
   }
-  
+
   /**
    * Create new integration
    */
@@ -310,43 +330,49 @@ export class N8nService {
     businessEntityId: string;
     webhookUrl: string;
     webhookToken: string;
-  }): Promise<N8nIntegration> {
+  }): Promise<N8nIntegration | null> {
     try {
-      return await prisma.n8nIntegration.create({
+      return await this.prisma.n8nIntegration.create({
         data: {
           businessEntityId: data.businessEntityId,
           webhookUrl: data.webhookUrl,
           webhookToken: data.webhookToken,
           isActive: true
+        },
+        include: {
+          businessEntity: true
         }
       });
     } catch (error) {
-      console.error('Error creating n8n integration:', error);
-      throw error;
+      console.error('Error creating integration:', error);
+      return null;
     }
   }
-  
+
   /**
    * Update integration
    */
   async updateIntegration(
     integrationId: string, 
     data: Partial<Pick<N8nIntegration, 'webhookUrl' | 'webhookToken' | 'isActive'>>
-  ): Promise<N8nIntegration> {
+  ): Promise<N8nIntegration | null> {
     try {
-      return await prisma.n8nIntegration.update({
+      return await this.prisma.n8nIntegration.update({
         where: { id: integrationId },
         data: {
           ...data,
           updatedAt: new Date()
+        },
+        include: {
+          businessEntity: true
         }
       });
     } catch (error) {
-      console.error('Error updating n8n integration:', error);
-      throw error;
+      console.error('Error updating integration:', error);
+      return null;
     }
   }
-  
+
   /**
    * Get webhook events for an integration
    */
@@ -356,7 +382,7 @@ export class N8nService {
     offset: number = 0
   ) {
     try {
-      return await prisma.n8nWebhookEvent.findMany({
+      return await this.prisma.n8nWebhookEvent.findMany({
         where: { n8nIntegrationId: integrationId },
         orderBy: { createdAt: 'desc' },
         take: limit,
@@ -389,7 +415,7 @@ export class N8nService {
     ];
     return validStatuses.includes(status as N8nWorkflowStatus);
   }
-  
+
   /**
    * Validate timestamp string (ISO 8601)
    */
