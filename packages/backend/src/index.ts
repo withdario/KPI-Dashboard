@@ -71,9 +71,8 @@ app.use(notFoundHandler);       // 404 handler
 app.use(errorLogging);          // Log errors with request context
 app.use(errorHandler);          // Standardized error responses
 
-// Only start server if this is the main module (not imported for testing)
-if (require.main === module) {
-  // Start server - bind to all interfaces to support both IPv4 and IPv6
+// Start server for both local development and Vercel deployment
+const startServer = () => {
   app.listen(Number(PORT), '0.0.0.0', () => {
     // eslint-disable-next-line no-console
     console.log(`🚀 Server running on port ${PORT}`);
@@ -94,6 +93,11 @@ if (require.main === module) {
     // eslint-disable-next-line no-console
     console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
   });
+};
+
+// Start server if this is the main module OR if we're in Vercel
+if (require.main === module || process.env.VERCEL) {
+  startServer();
 }
 
 export default app;
