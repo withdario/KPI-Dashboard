@@ -85,7 +85,9 @@ export class DatabaseOptimizationService {
     }
     
     // Analyze query patterns for frequency-based optimizations
-    for (const pattern of queryPatterns) {
+    // Convert Record to array for iteration
+    const patternsArray = Object.values(queryPatterns || {});
+    for (const pattern of patternsArray) {
       const analysis = this.analyzeQueryPattern(pattern);
       if (analysis) {
         analyses.push(analysis);

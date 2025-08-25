@@ -5,6 +5,7 @@ const authService_1 = require("../services/authService");
 const auth_1 = require("../middleware/auth");
 const router = (0, express_1.Router)();
 const authService = new authService_1.AuthService();
+// Register new user
 router.post('/register', async (req, res) => {
     try {
         const { email, password, firstName, lastName, businessEntityId } = req.body;
@@ -37,6 +38,7 @@ router.post('/register', async (req, res) => {
         });
     }
 });
+// Login user
 router.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -63,6 +65,7 @@ router.post('/login', async (req, res) => {
         });
     }
 });
+// Refresh token
 router.post('/refresh', auth_1.authenticateToken, async (req, res) => {
     try {
         const { refreshToken } = req.body;
@@ -81,6 +84,7 @@ router.post('/refresh', auth_1.authenticateToken, async (req, res) => {
             });
             return;
         }
+        // Generate new token
         const newToken = authService.generateJwtToken(decoded.userId, decoded.email);
         res.json({
             success: true,
@@ -96,6 +100,7 @@ router.post('/refresh', auth_1.authenticateToken, async (req, res) => {
         });
     }
 });
+// Request password reset
 router.post('/forgot-password', async (req, res) => {
     try {
         const { email } = req.body;
@@ -107,6 +112,7 @@ router.post('/forgot-password', async (req, res) => {
             return;
         }
         await authService.requestPasswordReset(email);
+        // Always return success to prevent email enumeration
         res.json({
             success: true,
             message: 'If a user with this email exists, a reset link will be sent'
@@ -120,6 +126,7 @@ router.post('/forgot-password', async (req, res) => {
         });
     }
 });
+// Reset password with token
 router.post('/reset-password', async (req, res) => {
     try {
         const { token, newPassword } = req.body;
@@ -146,6 +153,7 @@ router.post('/reset-password', async (req, res) => {
         });
     }
 });
+// Verify email with token
 router.post('/verify-email', async (req, res) => {
     try {
         const { token } = req.body;

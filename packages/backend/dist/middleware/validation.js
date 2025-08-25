@@ -2,6 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateEmailVerification = exports.validatePasswordResetConfirm = exports.validatePasswordResetRequest = exports.validateLogin = exports.validateRegistration = exports.handleValidationErrors = void 0;
 const express_validator_1 = require("express-validator");
+/**
+ * Handle validation errors
+ */
 const handleValidationErrors = (req, res, next) => {
     const errors = (0, express_validator_1.validationResult)(req);
     if (!errors.isEmpty()) {
@@ -18,6 +21,9 @@ const handleValidationErrors = (req, res, next) => {
     next();
 };
 exports.handleValidationErrors = handleValidationErrors;
+/**
+ * User registration validation rules
+ */
 exports.validateRegistration = [
     (0, express_validator_1.body)('email')
         .isEmail()
@@ -40,6 +46,9 @@ exports.validateRegistration = [
         .withMessage('Last name must be between 1 and 50 characters'),
     exports.handleValidationErrors
 ];
+/**
+ * User login validation rules
+ */
 exports.validateLogin = [
     (0, express_validator_1.body)('email')
         .isEmail()
@@ -50,6 +59,9 @@ exports.validateLogin = [
         .withMessage('Password is required'),
     exports.handleValidationErrors
 ];
+/**
+ * Password reset request validation
+ */
 exports.validatePasswordResetRequest = [
     (0, express_validator_1.body)('email')
         .isEmail()
@@ -57,6 +69,9 @@ exports.validatePasswordResetRequest = [
         .withMessage('Please provide a valid email address'),
     exports.handleValidationErrors
 ];
+/**
+ * Password reset confirmation validation
+ */
 exports.validatePasswordResetConfirm = [
     (0, express_validator_1.body)('token')
         .notEmpty()
@@ -68,6 +83,9 @@ exports.validatePasswordResetConfirm = [
         .withMessage('Password must contain at least one lowercase letter, one uppercase letter, and one number'),
     exports.handleValidationErrors
 ];
+/**
+ * Email verification validation
+ */
 exports.validateEmailVerification = [
     (0, express_validator_1.body)('token')
         .notEmpty()

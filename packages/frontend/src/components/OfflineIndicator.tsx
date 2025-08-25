@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Wifi, WifiOff, RefreshCw, Download, AlertTriangle } from 'lucide-react';
-import { useServiceWorker } from '@/hooks/useServiceWorker';
-import { TOUCH_BUTTON, RESPONSIVE_SPACING } from '@/utils/responsive';
+import { useServiceWorker } from '../hooks/useServiceWorker';
+import { TOUCH_BUTTON, RESPONSIVE_SPACING } from '../utils/responsive';
 
 const OfflineIndicator: React.FC = () => {
   const { isOnline, isInstalled, isUpdateAvailable, updateServiceWorker, clearCache } = useServiceWorker();

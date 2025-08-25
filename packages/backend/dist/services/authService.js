@@ -15,12 +15,13 @@ class AuthService {
             userId,
             email,
             iat: Math.floor(Date.now() / 1000),
-            exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60)
+            exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60) // 24 hours
         };
         return jsonwebtoken_1.default.sign(payload, process.env.JWT_SECRET || 'fallback-secret');
     }
     async registerUser(data) {
         try {
+            // Check if user already exists
             const existingUser = await prisma.user.findUnique({
                 where: { email: data.email }
             });
@@ -30,7 +31,9 @@ class AuthService {
                     message: 'User with this email already exists'
                 };
             }
+            // Hash password
             const hashedPassword = await bcrypt_1.default.hash(data.password, 12);
+            // Create user
             const user = await prisma.user.create({
                 data: {
                     email: data.email,
@@ -40,6 +43,7 @@ class AuthService {
                     businessEntityId: data.businessEntityId
                 }
             });
+            // Generate JWT token
             const token = this.generateJwtToken(user.id, user.email);
             return {
                 success: true,
@@ -65,6 +69,7 @@ class AuthService {
     }
     async loginUser(data) {
         try {
+            // Find user
             const user = await prisma.user.findUnique({
                 where: { email: data.email }
             });
@@ -74,12 +79,14 @@ class AuthService {
                     message: 'Invalid credentials'
                 };
             }
+            // Check if user is active
             if (!user.isActive) {
                 return {
                     success: false,
                     message: 'Account is deactivated'
                 };
             }
+            // Verify password
             const isPasswordValid = await bcrypt_1.default.compare(data.password, user.password);
             if (!isPasswordValid) {
                 return {
@@ -87,10 +94,12 @@ class AuthService {
                     message: 'Invalid credentials'
                 };
             }
+            // Update last login
             await prisma.user.update({
                 where: { id: user.id },
                 data: { lastLoginAt: new Date() }
             });
+            // Generate JWT token
             const token = this.generateJwtToken(user.id, user.email);
             return {
                 success: true,
@@ -125,6 +134,7 @@ class AuthService {
                     message: 'Invalid verification token'
                 };
             }
+            // Update user
             await prisma.user.update({
                 where: { id: user.id },
                 data: {
@@ -156,8 +166,10 @@ class AuthService {
                     message: 'If a user with this email exists, a reset link will be sent'
                 };
             }
+            // Generate reset token
             const resetToken = crypto_1.default.randomBytes(32).toString('hex');
-            const resetExpires = new Date(Date.now() + 3600000);
+            const resetExpires = new Date(Date.now() + 3600000); // 1 hour
+            // Update user
             await prisma.user.update({
                 where: { id: user.id },
                 data: {
@@ -165,6 +177,7 @@ class AuthService {
                     passwordResetExpires: resetExpires
                 }
             });
+            // TODO: Send email with reset link
             console.log(`Password reset token for ${email}: ${resetToken}`);
             return {
                 success: true,
@@ -193,7 +206,9 @@ class AuthService {
                     message: 'Invalid or expired reset token'
                 };
             }
+            // Hash new password
             const hashedPassword = await bcrypt_1.default.hash(newPassword, 12);
+            // Update user
             await prisma.user.update({
                 where: { id: user.id },
                 data: {

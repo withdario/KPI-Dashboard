@@ -1,25 +1,25 @@
 import { Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { useEffect } from 'react';
-import HomePage from '@/pages/HomePage';
-import LoginPage from '@/pages/LoginPage';
-import RegisterPage from '@/pages/RegisterPage';
-import DashboardPage from '@/pages/DashboardPage';
-import AnalyticsPage from '@/pages/AnalyticsPage';
-import AutomationPage from '@/pages/AutomationPage';
-import TrendsPage from '@/pages/TrendsPage';
-import UsersPage from '@/pages/UsersPage';
-import SocialMediaPage from '@/pages/SocialMediaPage';
-import CRMPage from '@/pages/CRMPage';
-import SettingsPage from '@/pages/SettingsPage';
-import GoogleAnalyticsPage from '@/pages/GoogleAnalyticsPage';
-import BusinessOverviewPage from '@/pages/BusinessOverviewPage';
-import UserSettingsPage from '@/pages/UserSettingsPage';
-import MobileDashboard from '@/pages/MobileDashboard';
-import ProtectedRoute from '@/components/ProtectedRoute';
-import Layout from '@/components/Layout';
-import OfflineIndicator from '@/components/OfflineIndicator';
-import { initializeCrossBrowserCompatibility } from '@/utils/crossBrowserCompatibility';
+import HomePage from './pages/HomePage';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import DashboardPage from './pages/DashboardPage';
+import AnalyticsPage from './pages/AnalyticsPage';
+import AutomationPage from './pages/AutomationPage';
+import TrendsPage from './pages/TrendsPage';
+import UsersPage from './pages/UsersPage';
+import SocialMediaPage from './pages/SocialMediaPage';
+import CRMPage from './pages/CRMPage';
+import SettingsPage from './pages/SettingsPage';
+import GoogleAnalyticsPage from './pages/GoogleAnalyticsPage';
+import BusinessOverviewPage from './pages/BusinessOverviewPage';
+import UserSettingsPage from './pages/UserSettingsPage';
+import MobileDashboard from './pages/MobileDashboard';
+import ProtectedRoute from './components/ProtectedRoute';
+import Layout from './components/Layout';
+import OfflineIndicator from './components/OfflineIndicator';
+import { initializeCrossBrowserCompatibility } from './utils/crossBrowserCompatibility';
 
 function App() {
   useEffect(() => {

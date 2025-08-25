@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Save, X, Check, AlertCircle } from 'lucide-react';
-import { TOUCH_BUTTON, RESPONSIVE_SPACING, MOBILE_FIRST } from '@/utils/responsive';
+import { TOUCH_BUTTON, RESPONSIVE_SPACING, MOBILE_FIRST } from '../utils/responsive';
 
 interface FormField {
   name: string;

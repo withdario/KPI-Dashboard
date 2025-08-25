@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Outlet } from 'react-router-dom';
 import MobileNavigation from './MobileNavigation';
-import { TOUCH_BUTTON } from '@/utils/responsive';
+import { TOUCH_BUTTON } from '../utils/responsive';
 
 const Layout = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);

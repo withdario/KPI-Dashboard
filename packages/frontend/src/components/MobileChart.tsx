@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ZoomIn, ZoomOut, RotateCcw, Maximize2, Minimize2 } from 'lucide-react';
-import { TouchGestureHandler } from './TouchGestureHandler';
-import { TOUCH_BUTTON, CHART_RESPONSIVE } from '@/utils/responsive';
+import TouchGestureHandler from './TouchGestureHandler';
+import { TOUCH_BUTTON, CHART_RESPONSIVE } from '../utils/responsive';
 
 interface MobileChartProps {
   children: React.ReactNode;

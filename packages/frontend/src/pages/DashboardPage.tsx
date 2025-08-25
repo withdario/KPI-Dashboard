@@ -2,9 +2,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { RefreshCw, Download, Calendar } from 'lucide-react';
 import toast from 'react-hot-toast';
-import DashboardLayout from '@/components/DashboardLayout';
-import DashboardGrid from '@/components/DashboardGrid';
-import DashboardWidget from '@/components/DashboardWidget';
+import DashboardLayout from '../components/DashboardLayout';
+import DashboardGrid from '../components/DashboardGrid';
+import DashboardWidget from '../components/DashboardWidget';
 
 const DashboardPage = () => {
   const { user, logout } = useAuth();

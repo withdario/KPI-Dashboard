@@ -7,10 +7,15 @@ class N8nService {
     constructor(prismaClient) {
         this.prisma = prismaClient || new client_1.PrismaClient();
     }
+    /**
+     * Validate webhook payload structure and data
+     */
     async validateWebhookPayload(payload) {
         const errors = [];
         const warnings = [];
+        // Check if this is the actual n8n payload format
         if (payload.ExecutionID && payload.Status && payload.Timestamp) {
+            // This is the actual n8n format, convert it
             const convertedPayload = this.convertN8nPayload(payload);
             return {
                 isValid: true,
@@ -19,6 +24,7 @@ class N8nService {
                 payload: convertedPayload
             };
         }
+        // Original validation logic for our expected format
         if (!payload.workflowId) {
             errors.push('workflowId is required');
         }
@@ -46,9 +52,11 @@ class N8nService {
         else if (!this.isValidTimestamp(payload.startTime)) {
             errors.push('Invalid startTime format (must be ISO 8601)');
         }
+        // Validate duration if provided
         if (payload.duration !== undefined && typeof payload.duration !== 'number') {
             errors.push('duration must be a number');
         }
+        // Optional field warnings
         if (!payload.inputData) {
             warnings.push('inputData is missing (optional but recommended)');
         }
@@ -63,16 +71,22 @@ class N8nService {
             payload: isValid ? payload : undefined
         };
     }
+    /**
+     * Process and store webhook event
+     */
     async processWebhookEvent(integrationId, payload) {
         try {
+            // Calculate duration if not provided
             let duration = payload.duration;
             if (!duration && payload.endTime) {
                 const startTime = new Date(payload.startTime);
                 const endTime = new Date(payload.endTime);
                 duration = endTime.getTime() - startTime.getTime();
             }
+            // Check if we're in development mode and database tables don't exist
             if (process.env.NODE_ENV === 'development') {
                 try {
+                    // Try to create webhook event record
                     const event = await this.prisma.n8nWebhookEvent.create({
                         data: {
                             n8nIntegrationId: integrationId,
@@ -90,7 +104,9 @@ class N8nService {
                             metadata: payload.metadata || {}
                         }
                     });
+                    // Update integration statistics
                     await this.updateIntegrationStats(integrationId);
+                    // Calculate and return metrics
                     const metrics = await this.calculateMetrics(integrationId);
                     return {
                         success: true,
@@ -99,6 +115,7 @@ class N8nService {
                     };
                 }
                 catch (dbError) {
+                    // In development mode, return success even if database operations fail
                     console.warn('Database operation failed in development mode, returning mock response:', dbError);
                     return {
                         success: true,
@@ -115,6 +132,7 @@ class N8nService {
                 }
             }
             else {
+                // Production mode - proceed with normal database operations
                 const event = await this.prisma.n8nWebhookEvent.create({
                     data: {
                         n8nIntegrationId: integrationId,
@@ -132,7 +150,9 @@ class N8nService {
                         metadata: payload.metadata || {}
                     }
                 });
+                // Update integration statistics
                 await this.updateIntegrationStats(integrationId);
+                // Calculate and return metrics
                 const metrics = await this.calculateMetrics(integrationId);
                 return {
                     success: true,
@@ -149,6 +169,9 @@ class N8nService {
             };
         }
     }
+    /**
+     * Update integration statistics
+     */
     async updateIntegrationStats(integrationId) {
         try {
             const stats = await this.prisma.n8nWebhookEvent.groupBy({
@@ -157,6 +180,7 @@ class N8nService {
                 _count: { status: true }
             });
             if (!stats || stats.length === 0) {
+                // No events found, just update the last webhook time
                 await this.prisma.n8nIntegration.update({
                     where: { id: integrationId },
                     data: {
@@ -178,8 +202,12 @@ class N8nService {
         }
         catch (error) {
             console.error('Error updating integration stats:', error);
+            // Don't throw error, just log it
         }
     }
+    /**
+     * Calculate metrics for an integration
+     */
     async calculateMetrics(integrationId) {
         try {
             const events = await this.prisma.n8nWebhookEvent.findMany({
@@ -229,6 +257,9 @@ class N8nService {
             };
         }
     }
+    /**
+     * Get integration by ID
+     */
     async getIntegrationById(integrationId) {
         try {
             return await this.prisma.n8nIntegration.findUnique({
@@ -247,6 +278,9 @@ class N8nService {
             return null;
         }
     }
+    /**
+     * Get integration by business entity ID
+     */
     async getIntegrationByBusinessEntity(businessEntityId) {
         try {
             return await this.prisma.n8nIntegration.findFirst({
@@ -268,6 +302,9 @@ class N8nService {
             return null;
         }
     }
+    /**
+     * Create new integration
+     */
     async createIntegration(data) {
         try {
             return await this.prisma.n8nIntegration.create({
@@ -287,6 +324,9 @@ class N8nService {
             return null;
         }
     }
+    /**
+     * Update integration
+     */
     async updateIntegration(integrationId, data) {
         try {
             return await this.prisma.n8nIntegration.update({
@@ -305,6 +345,9 @@ class N8nService {
             return null;
         }
     }
+    /**
+     * Get webhook events for an integration
+     */
     async getWebhookEvents(integrationId, limit = 100, offset = 0) {
         try {
             return await this.prisma.n8nWebhookEvent.findMany({
@@ -319,6 +362,9 @@ class N8nService {
             throw error;
         }
     }
+    /**
+     * Validate event type
+     */
     isValidEventType(eventType) {
         const validTypes = [
             'workflow_started', 'workflow_completed', 'workflow_failed', 'workflow_cancelled',
@@ -327,22 +373,31 @@ class N8nService {
         ];
         return validTypes.includes(eventType);
     }
+    /**
+     * Validate status
+     */
     isValidStatus(status) {
         const validStatuses = [
             'running', 'completed', 'failed', 'cancelled', 'waiting', 'error'
         ];
         return validStatuses.includes(status);
     }
+    /**
+     * Validate timestamp string (ISO 8601)
+     */
     isValidTimestamp(timestamp) {
         const date = new Date(timestamp);
         return !isNaN(date.getTime());
     }
+    /**
+     * Convert actual n8n payload format to our expected format
+     */
     convertN8nPayload(actualPayload) {
         return {
-            workflowId: `workflow-${Date.now()}`,
-            workflowName: 'Lead Generation Workflow',
+            workflowId: `workflow-${Date.now()}`, // Generate a workflow ID since it's not provided
+            workflowName: 'Lead Generation Workflow', // Default name since it's not provided
             executionId: actualPayload.ExecutionID,
-            eventType: 'workflow_completed',
+            eventType: 'workflow_completed', // Default to completed since we don't have this info
             status: this.mapN8nStatus(actualPayload.Status),
             startTime: actualPayload.Timestamp,
             inputData: {
@@ -359,6 +414,9 @@ class N8nService {
             }
         };
     }
+    /**
+     * Map n8n status to our workflow status
+     */
     mapN8nStatus(n8nStatus) {
         const statusMap = {
             'success': 'completed',

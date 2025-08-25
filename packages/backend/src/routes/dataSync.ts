@@ -1,12 +1,24 @@
-import { Router } from 'express';
-import { body } from 'express-validator';
+import express from 'express';
 import { DataSyncController } from '../controllers/dataSyncController';
+import { DataSyncService } from '../services/dataSyncService';
+import { GoogleAnalyticsService } from '../services/googleAnalyticsService';
+import { N8nService } from '../services/n8nService';
 import { authenticateToken } from '../middleware/auth';
-import { handleValidationErrors } from '../middleware/validation';
 import { generalRateLimit } from '../middleware/rateLimit';
+import { body } from 'express-validator';
 
-const router = Router();
-const dataSyncController = new DataSyncController(global.dataSyncService);
+const router = express.Router();
+
+// Initialize services and controller with proper global typing
+const googleAnalyticsService = new GoogleAnalyticsService();
+const n8nService = new N8nService();
+const dataSyncService = new DataSyncService(
+  (global as any).prisma,
+  googleAnalyticsService,
+  n8nService,
+  (global as any).performanceService
+);
+const dataSyncController = new DataSyncController(dataSyncService);
 
 // Apply rate limiting to all sync routes
 router.use(generalRateLimit);
@@ -48,7 +60,6 @@ router.post('/config',
   body('n8nSyncSchedule').optional().isString(),
   body('cleanupSyncEnabled').optional().isBoolean(),
   body('cleanupSyncSchedule').optional().isString(),
-  handleValidationErrors,
   dataSyncController.createSyncConfig.bind(dataSyncController)
 );
 
@@ -71,7 +82,6 @@ router.put('/config/:businessEntityId',
   body('n8nSyncSchedule').optional().isString(),
   body('cleanupSyncEnabled').optional().isBoolean(),
   body('cleanupSyncSchedule').optional().isString(),
-  handleValidationErrors,
   dataSyncController.updateSyncConfig.bind(dataSyncController)
 );
 
@@ -83,7 +93,6 @@ router.put('/config/:businessEntityId',
 router.post('/manual',
   body('businessEntityId').isString().notEmpty(),
   body('jobType').isString().notEmpty().isIn(['ga4_daily', 'n8n_realtime', 'cleanup']),
-  handleValidationErrors,
   dataSyncController.triggerManualSync.bind(dataSyncController)
 );
 

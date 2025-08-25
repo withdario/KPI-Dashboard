@@ -3,18 +3,53 @@
   "builds": [
     {
       "src": "packages/backend/src/index.ts",
-      "use": "@vercel/node"
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": [
+          "packages/backend/src/**/*",
+          "packages/backend/prisma/**/*",
+          "packages/backend/package.json"
+        ]
+      }
+    },
+    {
+      "src": "packages/frontend/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist",
+        "buildCommand": "cd packages/frontend && npm run build",
+        "installCommand": "npm install"
+      }
     }
   ],
   "routes": [
     {
-      "src": "/(.*)",
+      "src": "/api/(.*)",
       "dest": "packages/backend/src/index.ts"
+    },
+    {
+      "src": "/health",
+      "dest": "packages/backend/src/index.ts"
+    },
+    {
+      "src": "/(.*\\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot))",
+      "dest": "packages/frontend/dist/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "packages/frontend/dist/index.html"
     }
   ],
   "env": {
     "NODE_ENV": "production"
-  }
+  },
+  "functions": {
+    "packages/backend/src/index.ts": {
+      "maxDuration": 30
+    }
+  },
+  "buildCommand": "npm run build",
+  "installCommand": "npm install"
 }
 
 

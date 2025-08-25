@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Menu, X } from 'lucide-react';
-import { TOUCH_BUTTON, RESPONSIVE_SPACING } from '@/utils/responsive';
+import { TOUCH_BUTTON, RESPONSIVE_SPACING } from '../utils/responsive';
 import BreadcrumbNavigation from './BreadcrumbNavigation';
 
 interface DashboardLayoutProps {

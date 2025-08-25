@@ -6,6 +6,7 @@ const prisma = new client_1.PrismaClient();
 class BusinessEntityService {
     async createBusinessEntity(data) {
         try {
+            // Check if domain already exists
             if (data.domain) {
                 const existingEntity = await prisma.businessEntity.findUnique({
                     where: { domain: data.domain }
@@ -113,6 +114,7 @@ class BusinessEntityService {
     }
     async updateBusinessEntity(id, data) {
         try {
+            // Check if domain already exists (if updating domain)
             if (data.domain) {
                 const existingEntity = await prisma.businessEntity.findFirst({
                     where: {
@@ -154,6 +156,7 @@ class BusinessEntityService {
     }
     async deleteBusinessEntity(id) {
         try {
+            // Check if business entity has users
             const users = await prisma.user.findMany({
                 where: { businessEntityId: id }
             });
@@ -163,6 +166,7 @@ class BusinessEntityService {
                     message: 'Cannot delete business entity with active users'
                 };
             }
+            // Check if business entity has integrations
             const integrations = await prisma.googleAnalyticsIntegration.findMany({
                 where: { businessEntityId: id }
             });
@@ -197,6 +201,7 @@ class BusinessEntityService {
                 where: { id },
                 data: { isActive: false }
             });
+            // Deactivate all users in this business entity
             await prisma.user.updateMany({
                 where: { businessEntityId: id },
                 data: { isActive: false }

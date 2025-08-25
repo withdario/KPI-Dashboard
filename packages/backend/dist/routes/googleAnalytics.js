@@ -6,14 +6,21 @@ const auth_1 = require("../middleware/auth");
 const express_rate_limit_1 = require("express-rate-limit");
 const router = (0, express_1.Router)();
 const googleAnalyticsService = new googleAnalyticsService_1.GoogleAnalyticsService();
+// Rate limiting for Google Analytics endpoints
 const analyticsRateLimit = (0, express_rate_limit_1.rateLimit)({
-    windowMs: 15 * 60 * 1000,
-    max: 100,
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit each IP to 100 requests per windowMs
     message: 'Too many requests to Google Analytics API, please try again later.',
     standardHeaders: true,
     legacyHeaders: false,
 });
+// Apply rate limiting to all analytics routes
 router.use(analyticsRateLimit);
+/**
+ * @route GET /api/google-analytics/test/oauth-url
+ * @desc TEST ENDPOINT: Generate OAuth2 authorization URL (no auth required)
+ * @access Public (for testing only)
+ */
 router.get('/test/oauth-url', (req, res) => {
     try {
         const state = req.query.state || 'test123';
@@ -41,6 +48,11 @@ router.get('/test/oauth-url', (req, res) => {
         });
     }
 });
+/**
+ * @route GET /api/google-analytics/test/oauth-callback
+ * @desc TEST ENDPOINT: Handle OAuth2 redirect from Google (GET request)
+ * @access Public (for testing only)
+ */
 router.get('/test/oauth-callback', async (req, res) => {
     try {
         const { code, state } = req.query;
@@ -50,6 +62,7 @@ router.get('/test/oauth-callback', async (req, res) => {
                 error: 'Authorization code is missing from redirect'
             });
         }
+        // For now, just return the code so you can test it manually
         return res.json({
             success: true,
             message: 'OAuth2 callback received successfully!',
@@ -73,6 +86,11 @@ router.get('/test/oauth-callback', async (req, res) => {
         });
     }
 });
+/**
+ * @route POST /api/google-analytics/test/oauth-callback
+ * @desc TEST ENDPOINT: Exchange authorization code for tokens (POST request)
+ * @access Public (for testing only)
+ */
 router.post('/test/oauth-callback', async (req, res) => {
     try {
         const { code, propertyId } = req.body;
@@ -82,13 +100,16 @@ router.post('/test/oauth-callback', async (req, res) => {
                 error: 'Missing required parameters: code and propertyId'
             });
         }
+        // Validate property ID format
         if (!googleAnalyticsService.validatePropertyId(propertyId)) {
             return res.status(400).json({
                 success: false,
                 error: 'Invalid GA4 property ID format'
             });
         }
+        // Exchange code for tokens
         const tokens = await googleAnalyticsService.exchangeCodeForTokens(code);
+        // Set the credentials in the service for future API calls
         googleAnalyticsService.setCredentials(tokens.accessToken, tokens.refreshToken);
         return res.json({
             success: true,
@@ -115,8 +136,14 @@ router.post('/test/oauth-callback', async (req, res) => {
         });
     }
 });
+/**
+ * @route GET /api/google-analytics/test/health
+ * @desc TEST ENDPOINT: Check Google Analytics service health (no auth required)
+ * @access Public (for testing only)
+ */
 router.get('/test/health', (_req, res) => {
     try {
+        // Check if required environment variables are set
         const requiredEnvVars = [
             'GOOGLE_CLIENT_ID',
             'GOOGLE_CLIENT_SECRET',
@@ -153,6 +180,11 @@ router.get('/test/health', (_req, res) => {
         });
     }
 });
+/**
+ * @route GET /api/google-analytics/test/metrics
+ * @desc TEST ENDPOINT: Get basic GA4 metrics using authenticated tokens
+ * @access Public (for testing only)
+ */
 router.get('/test/metrics', async (req, res) => {
     try {
         const { propertyId, startDate, endDate } = req.query;
@@ -162,6 +194,7 @@ router.get('/test/metrics', async (req, res) => {
                 error: 'Missing required parameters: propertyId, startDate, endDate'
             });
         }
+        // Get basic metrics from GA4
         const metrics = await googleAnalyticsService.getBasicMetrics(propertyId, startDate, endDate);
         return res.json({
             success: true,
@@ -183,6 +216,11 @@ router.get('/test/metrics', async (req, res) => {
         });
     }
 });
+/**
+ * @route GET /api/google-analytics/auth/url
+ * @desc Generate OAuth2 authorization URL for Google Analytics
+ * @access Private
+ */
 router.get('/auth/url', auth_1.authenticateToken, (req, res) => {
     try {
         const state = req.query.state || 'default';
@@ -203,6 +241,11 @@ router.get('/auth/url', auth_1.authenticateToken, (req, res) => {
         });
     }
 });
+/**
+ * @route POST /api/google-analytics/auth/callback
+ * @desc Exchange authorization code for access tokens
+ * @access Private
+ */
 router.post('/auth/callback', auth_1.authenticateToken, async (req, res) => {
     try {
         const { code, businessEntityId, propertyId } = req.body;
@@ -212,13 +255,17 @@ router.post('/auth/callback', auth_1.authenticateToken, async (req, res) => {
                 error: 'Missing required fields: code, businessEntityId, propertyId'
             });
         }
+        // Validate property ID format
         if (!googleAnalyticsService.validatePropertyId(propertyId)) {
             return res.status(400).json({
                 success: false,
                 error: 'Invalid GA4 property ID format'
             });
         }
+        // Exchange code for tokens
         const tokens = await googleAnalyticsService.exchangeCodeForTokens(code);
+        // TODO: Store tokens in database (when database migration is working)
+        // For now, return the tokens
         return res.json({
             success: true,
             data: {
@@ -226,6 +273,8 @@ router.post('/auth/callback', auth_1.authenticateToken, async (req, res) => {
                 propertyId,
                 businessEntityId,
                 tokenExpiry: tokens.expiryDate,
+                // Note: In production, tokens should be stored securely in database
+                // and not returned in the response
             }
         });
     }
@@ -237,6 +286,11 @@ router.post('/auth/callback', auth_1.authenticateToken, async (req, res) => {
         });
     }
 });
+/**
+ * @route POST /api/google-analytics/refresh-token
+ * @desc Refresh access token using refresh token
+ * @access Private
+ */
 router.post('/refresh-token', auth_1.authenticateToken, async (req, res) => {
     try {
         const { refreshToken } = req.body;
@@ -252,6 +306,7 @@ router.post('/refresh-token', auth_1.authenticateToken, async (req, res) => {
             data: {
                 message: 'Token refreshed successfully',
                 tokenExpiry: tokens.expiryDate,
+                // Note: In production, new tokens should be stored in database
             }
         });
     }
@@ -263,6 +318,11 @@ router.post('/refresh-token', auth_1.authenticateToken, async (req, res) => {
         });
     }
 });
+/**
+ * @route GET /api/google-analytics/metrics
+ * @desc Get basic metrics from Google Analytics 4
+ * @access Private
+ */
 router.get('/metrics', auth_1.authenticateToken, async (req, res) => {
     try {
         const { propertyId, startDate, endDate } = req.query;
@@ -272,12 +332,14 @@ router.get('/metrics', auth_1.authenticateToken, async (req, res) => {
                 error: 'Missing required query parameters: propertyId, startDate, endDate'
             });
         }
+        // Validate property ID format
         if (!googleAnalyticsService.validatePropertyId(propertyId)) {
             return res.status(400).json({
                 success: false,
                 error: 'Invalid GA4 property ID format'
             });
         }
+        // Validate date format (YYYY-MM-DD)
         const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
         if (!dateRegex.test(startDate) || !dateRegex.test(endDate)) {
             return res.status(400).json({
@@ -285,6 +347,9 @@ router.get('/metrics', auth_1.authenticateToken, async (req, res) => {
                 error: 'Invalid date format. Use YYYY-MM-DD'
             });
         }
+        // TODO: Get stored access token from database for this business entity
+        // For now, this endpoint will fail without proper authentication
+        // This is expected behavior until we complete the database integration
         return res.status(501).json({
             success: false,
             error: 'Metrics retrieval not yet implemented - requires database integration',
@@ -299,8 +364,14 @@ router.get('/metrics', auth_1.authenticateToken, async (req, res) => {
         });
     }
 });
+/**
+ * @route GET /api/google-analytics/health
+ * @desc Check Google Analytics service health
+ * @access Private
+ */
 router.get('/health', auth_1.authenticateToken, (_req, res) => {
     try {
+        // Check if required environment variables are set
         const requiredEnvVars = [
             'GOOGLE_CLIENT_ID',
             'GOOGLE_CLIENT_SECRET',

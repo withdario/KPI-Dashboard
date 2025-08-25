@@ -1,3 +1,7 @@
+/**
+ * n8n Webhook Integration Types
+ * Defines the structure for n8n webhook data and integration management
+ */
 export interface N8nActualPayload {
     ExecutionID: string;
     Status: string;

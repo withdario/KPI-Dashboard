@@ -6,6 +6,7 @@ const prisma = new client_1.PrismaClient();
 class UserManagementService {
     async createUser(data) {
         try {
+            // Check if user already exists
             const existingUser = await prisma.user.findUnique({
                 where: { email: data.email }
             });
@@ -15,6 +16,7 @@ class UserManagementService {
                     message: 'User with this email already exists'
                 };
             }
+            // Hash password
             const bcrypt = require('bcrypt');
             const hashedPassword = await bcrypt.hash(data.password, 12);
             const user = await prisma.user.create({
@@ -129,6 +131,7 @@ class UserManagementService {
                     message: 'User not found'
                 };
             }
+            // Check if email already exists (if updating email)
             if (data.email && data.email !== existingUser.email) {
                 const emailExists = await prisma.user.findUnique({
                     where: { email: data.email }

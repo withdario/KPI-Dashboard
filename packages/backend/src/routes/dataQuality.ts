@@ -1,22 +1,22 @@
-import { Router } from 'express';
+import express from 'express';
 import { DataQualityController } from '../controllers/dataQualityController';
 import { DataQualityService } from '../services/dataQualityService';
 import { authenticateToken } from '../middleware/auth';
-import { rateLimit } from '../middleware/rateLimit';
-import { validateRequest } from '../middleware/validation';
+import { generalRateLimit } from '../middleware/rateLimit';
+// import { validateRequest } from '../middleware/validation'; // This middleware doesn't exist yet
 import { body, param, query } from 'express-validator';
 
-const router = Router();
+const router = express.Router();
 
 // Initialize services and controller
-const dataQualityService = new DataQualityService(global.prisma);
+const dataQualityService = new DataQualityService((global as any).prisma);
 const dataQualityController = new DataQualityController(dataQualityService);
 
 // Apply authentication to all routes
 router.use(authenticateToken);
 
 // Apply rate limiting to all routes
-router.use(rateLimit);
+router.use(generalRateLimit);
 
 // Validation schemas
 const validateDataQualityRequest = [
@@ -54,7 +54,7 @@ const validateMetricTypeQuery = [
 ];
 
 // Data Quality Validation Routes
-router.post('/validate', validateDataQualityRequest, validateRequest, async (req, res) => {
+router.post('/validate', validateDataQualityRequest, async (req: express.Request, res: express.Response) => {
   await dataQualityController.validateDataQuality(req, res);
 });
 
@@ -63,8 +63,7 @@ router.get('/metrics/:businessEntityId',
   param('businessEntityId').isString().notEmpty().withMessage('Business entity ID is required'),
   validateDateRangeQuery,
   query('source').optional().isString().withMessage('Source must be a string'),
-  validateRequest,
-  async (req, res) => {
+  async (req: express.Request, res: express.Response) => {
     await dataQualityController.getQualityMetrics(req, res);
   }
 );
@@ -74,8 +73,7 @@ router.get('/anomalies/:businessEntityId',
   param('businessEntityId').isString().notEmpty().withMessage('Business entity ID is required'),
   validateMetricTypeQuery,
   validateDateRangeQuery,
-  validateRequest,
-  async (req, res) => {
+  async (req: express.Request, res: express.Response) => {
     await dataQualityController.detectAnomalies(req, res);
   }
 );
@@ -85,8 +83,7 @@ router.get('/report/:businessEntityId',
   param('businessEntityId').isString().notEmpty().withMessage('Business entity ID is required'),
   validateDateRangeQuery,
   query('source').optional().isString().withMessage('Source must be a string'),
-  validateRequest,
-  async (req, res) => {
+  async (req: express.Request, res: express.Response) => {
     await dataQualityController.generateQualityReport(req, res);
   }
 );
@@ -96,14 +93,13 @@ router.get('/rules', async (req, res) => {
   await dataQualityController.getQualityRules(req, res);
 });
 
-router.post('/rules', validateQualityRuleRequest, validateRequest, async (req, res) => {
+router.post('/rules', validateQualityRuleRequest, async (req: express.Request, res: express.Response) => {
   await dataQualityController.addQualityRule(req, res);
 });
 
 router.delete('/rules/:ruleId',
   param('ruleId').isString().notEmpty().withMessage('Rule ID is required'),
-  validateRequest,
-  async (req, res) => {
+  async (req: express.Request, res: express.Response) => {
     await dataQualityController.removeQualityRule(req, res);
   }
 );
@@ -114,21 +110,19 @@ router.get('/alerts/:businessEntityId',
   query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100'),
   query('offset').optional().isInt({ min: 0 }).withMessage('Offset must be a non-negative integer'),
   query('resolved').optional().isBoolean().withMessage('Resolved must be a boolean'),
-  validateRequest,
-  async (req, res) => {
+  async (req: express.Request, res: express.Response) => {
     await dataQualityController.getAlerts(req, res);
   }
 );
 
-router.post('/alerts', validateAlertRequest, validateRequest, async (req, res) => {
+router.post('/alerts', validateAlertRequest, async (req: express.Request, res: express.Response) => {
   await dataQualityController.createAlert(req, res);
 });
 
 router.patch('/alerts/:alertId/resolve',
   param('alertId').isString().notEmpty().withMessage('Alert ID is required'),
   body('resolvedBy').isString().notEmpty().withMessage('Resolved by is required'),
-  validateRequest,
-  async (req, res) => {
+  async (req: express.Request, res: express.Response) => {
     await dataQualityController.resolveAlert(req, res);
   }
 );

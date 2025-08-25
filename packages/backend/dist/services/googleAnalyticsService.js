@@ -8,12 +8,17 @@ class GoogleAnalyticsService {
     oauth2Client;
     analyticsDataClient;
     constructor() {
+        // Initialize OAuth2 client
         this.oauth2Client = new googleapis_1.google.auth.OAuth2(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET, process.env.GOOGLE_REDIRECT_URI);
+        // Initialize Analytics Data API client
         this.analyticsDataClient = googleapis_1.google.analyticsdata({
             version: 'v1beta',
             auth: this.oauth2Client
         });
     }
+    /**
+     * Generate OAuth2 authorization URL
+     */
     generateAuthUrl(state) {
         try {
             const scopes = [
@@ -30,6 +35,9 @@ class GoogleAnalyticsService {
             throw new errorHandler_2.ValidationError(`Failed to generate auth URL: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
+    /**
+     * Exchange authorization code for tokens with enhanced error handling
+     */
     async exchangeCodeForTokens(code) {
         if (!code) {
             throw new errorHandler_2.ValidationError('Authorization code is required');
@@ -52,10 +60,16 @@ class GoogleAnalyticsService {
                 }
                 throw new errorHandler_2.ExternalApiError(`Token exchange failed: ${error instanceof Error ? error.message : 'Unknown error'}`, 500);
             }
-        }, async () => {
+        }, 
+        // Fallback: return cached tokens if available
+        async () => {
+            // This would typically check for cached tokens
             throw new errorHandler_2.ExternalApiError('No fallback tokens available', 503);
         });
     }
+    /**
+     * Refresh access token using refresh token with retry logic
+     */
     async refreshAccessToken(refreshToken) {
         if (!refreshToken) {
             throw new errorHandler_2.ValidationError('Refresh token is required');
@@ -80,8 +94,14 @@ class GoogleAnalyticsService {
                 }
                 throw new errorHandler_2.ExternalApiError(`Token refresh failed: ${error instanceof Error ? error.message : 'Unknown error'}`, 500);
             }
-        }, 3, 1000, 10000);
+        }, 3, // maxRetries
+        1000, // baseDelay
+        10000 // maxDelay
+        );
     }
+    /**
+     * Set credentials for API calls
+     */
     setCredentials(accessToken, refreshToken) {
         if (!accessToken) {
             throw new errorHandler_2.ValidationError('Access token is required');
@@ -99,6 +119,9 @@ class GoogleAnalyticsService {
             throw new errorHandler_2.ValidationError(`Failed to set credentials: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
+    /**
+     * Get GA4 metrics with comprehensive error handling
+     */
     async getMetrics(request) {
         if (!request.propertyId) {
             throw new errorHandler_2.ValidationError('Property ID is required');
@@ -106,7 +129,9 @@ class GoogleAnalyticsService {
         if (!request.startDate || !request.endDate) {
             throw new errorHandler_2.ValidationError('Start date and end date are required');
         }
-        return (0, errorHandler_1.withGracefulDegradation)(async () => {
+        return (0, errorHandler_1.withGracefulDegradation)(
+        // Primary operation: fetch from Google Analytics
+        async () => {
             try {
                 const response = await this.analyticsDataClient.properties.runReport({
                     property: `properties/${request.propertyId}`,
@@ -160,7 +185,10 @@ class GoogleAnalyticsService {
                 }
                 throw new errorHandler_2.ExternalApiError(`Failed to fetch GA4 metrics: ${error instanceof Error ? error.message : 'Unknown error'}`, 500);
             }
-        }, async () => {
+        }, 
+        // Fallback: return cached or default data
+        async () => {
+            // This would typically return cached data or default metrics
             return {
                 propertyId: request.propertyId,
                 startDate: request.startDate,
@@ -176,6 +204,9 @@ class GoogleAnalyticsService {
             };
         }, 'google-analytics-metrics');
     }
+    /**
+     * Validate GA4 property access
+     */
     async validatePropertyAccess(propertyId) {
         if (!propertyId) {
             throw new errorHandler_2.ValidationError('Property ID is required');
@@ -195,6 +226,9 @@ class GoogleAnalyticsService {
             }
         });
     }
+    /**
+     * Get available GA4 properties for the authenticated user
+     */
     async getAvailableProperties() {
         return (0, errorHandler_1.withCircuitBreaker)('google-analytics-properties', async () => {
             try {
@@ -213,10 +247,16 @@ class GoogleAnalyticsService {
                 }
                 throw new errorHandler_2.ExternalApiError(`Failed to fetch properties: ${error instanceof Error ? error.message : 'Unknown error'}`, 500);
             }
-        }, async () => []);
+        }, 
+        // Fallback: return empty array
+        async () => []);
     }
+    /**
+     * Check service health
+     */
     async checkHealth() {
         try {
+            // Try to make a simple API call to check connectivity
             await this.analyticsDataClient.properties.list({ pageSize: 1 });
             return {
                 status: 'healthy',
@@ -236,6 +276,7 @@ class GoogleAnalyticsService {
             };
         }
     }
+    // Legacy method for backward compatibility
     async getBasicMetrics(propertyId, startDate, endDate) {
         const request = {
             propertyId,
@@ -247,7 +288,9 @@ class GoogleAnalyticsService {
         const response = await this.getMetrics(request);
         return response.metrics;
     }
+    // Legacy method for backward compatibility
     validatePropertyId(propertyId) {
+        // GA4 property IDs are typically numeric
         return /^\d+$/.test(propertyId);
     }
 }

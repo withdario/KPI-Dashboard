@@ -1,5 +1,5 @@
-import DashboardLayout from '@/components/DashboardLayout';
-import N8nAutomationDashboard from '@/components/N8nAutomationDashboard';
+import DashboardLayout from '../components/DashboardLayout';
+import N8nAutomationDashboard from '../components/N8nAutomationDashboard';
 
 const AutomationPage = () => {
   return (

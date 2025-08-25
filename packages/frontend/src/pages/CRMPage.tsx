@@ -1,6 +1,6 @@
-import DashboardLayout from '@/components/DashboardLayout';
-import DashboardGrid from '@/components/DashboardGrid';
-import DashboardWidget from '@/components/DashboardWidget';
+import DashboardLayout from '../components/DashboardLayout';
+import DashboardGrid from '../components/DashboardGrid';
+import DashboardWidget from '../components/DashboardWidget';
 import { Building, Users, DollarSign, Calendar, TrendingUp, Target, CheckCircle, Clock, UserPlus, Phone, Mail, MapPin } from 'lucide-react';
 
 const CRMPage = () => {

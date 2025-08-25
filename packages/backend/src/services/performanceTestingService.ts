@@ -105,7 +105,14 @@ export class PerformanceTestingService {
           timeout: 30
         },
         expectedResults: {
-          responseTime: { average: 100 },
+          responseTime: { 
+            min: 80, 
+            max: 120, 
+            average: 100, 
+            p50: 100, 
+            p95: 115, 
+            p99: 118 
+          },
           errorRate: 0,
           throughput: 5
         },
@@ -130,7 +137,14 @@ export class PerformanceTestingService {
           timeout: 30
         },
         expectedResults: {
-          responseTime: { average: 300 },
+          responseTime: { 
+            min: 250, 
+            max: 350, 
+            average: 300, 
+            p50: 300, 
+            p95: 325, 
+            p99: 335 
+          },
           errorRate: 0,
           throughput: 20
         },
@@ -155,7 +169,14 @@ export class PerformanceTestingService {
           timeout: 60
         },
         expectedResults: {
-          responseTime: { average: 800 },
+          responseTime: { 
+            min: 700, 
+            max: 900, 
+            average: 800, 
+            p50: 800, 
+            p95: 850, 
+            p99: 880 
+          },
           errorRate: 1,
           throughput: 40
         },

@@ -8,7 +8,15 @@ declare global {
         }
     }
 }
+/**
+ * Request logging middleware
+ * Adds request ID and logs all incoming requests
+ */
 export declare const requestLogging: (req: Request, res: Response, next: NextFunction) => void;
+/**
+ * Error logging middleware
+ * Logs all errors with request context
+ */
 export declare const errorLogging: (err: Error, req: Request, _res: Response, next: NextFunction) => void;
 export { logger };
 //# sourceMappingURL=logging.d.ts.map

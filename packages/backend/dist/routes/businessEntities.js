@@ -5,6 +5,7 @@ const businessEntityService_1 = require("../services/businessEntityService");
 const auth_1 = require("../middleware/auth");
 const router = (0, express_1.Router)();
 const businessEntityService = new businessEntityService_1.BusinessEntityService();
+// Create new business entity
 router.post('/', auth_1.authenticateToken, async (req, res) => {
     try {
         const { name, description, domain } = req.body;
@@ -35,6 +36,7 @@ router.post('/', auth_1.authenticateToken, async (req, res) => {
         });
     }
 });
+// Get all business entities
 router.get('/', auth_1.authenticateToken, async (_req, res) => {
     try {
         const result = await businessEntityService.getAllBusinessEntities();
@@ -53,6 +55,7 @@ router.get('/', auth_1.authenticateToken, async (_req, res) => {
         });
     }
 });
+// Get business entity by ID
 router.get('/:id', auth_1.authenticateToken, async (req, res) => {
     try {
         const { id } = req.params;
@@ -72,9 +75,11 @@ router.get('/:id', auth_1.authenticateToken, async (req, res) => {
         });
     }
 });
+// Get business entity by domain
 router.get('/domain/:domain', auth_1.authenticateToken, async (req, res) => {
     try {
         const { domain } = req.params;
+        // Find by domain
         const result = await businessEntityService.getAllBusinessEntities();
         if (result.success && result.businessEntities) {
             const entity = result.businessEntities.find(e => e.domain === domain);
@@ -104,6 +109,7 @@ router.get('/domain/:domain', auth_1.authenticateToken, async (req, res) => {
         });
     }
 });
+// Update business entity
 router.put('/:id', auth_1.authenticateToken, async (req, res) => {
     try {
         const { id } = req.params;
@@ -135,6 +141,7 @@ router.put('/:id', auth_1.authenticateToken, async (req, res) => {
         });
     }
 });
+// Deactivate business entity
 router.patch('/:id/deactivate', auth_1.authenticateToken, async (req, res) => {
     try {
         const { id } = req.params;
@@ -154,6 +161,7 @@ router.patch('/:id/deactivate', auth_1.authenticateToken, async (req, res) => {
         });
     }
 });
+// Activate business entity
 router.patch('/:id/activate', auth_1.authenticateToken, async (req, res) => {
     try {
         const { id } = req.params;
@@ -173,6 +181,7 @@ router.patch('/:id/activate', auth_1.authenticateToken, async (req, res) => {
         });
     }
 });
+// Delete business entity
 router.delete('/:id', auth_1.authenticateToken, async (req, res) => {
     try {
         const { id } = req.params;
@@ -192,6 +201,7 @@ router.delete('/:id', auth_1.authenticateToken, async (req, res) => {
         });
     }
 });
+// Get business entity stats
 router.get('/:id/stats', auth_1.authenticateToken, async (req, res) => {
     try {
         const { id } = req.params;

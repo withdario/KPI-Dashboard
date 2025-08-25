@@ -10,19 +10,28 @@ const metrics = {
     averageResponseTime: 0,
     lastHealthCheck: Date.now()
 };
+/**
+ * Request metrics middleware
+ * Tracks request counts and response times
+ */
 const requestMetrics = (_req, res, next) => {
     const startTime = Date.now();
+    // Increment total requests
     metrics.totalRequests++;
+    // Track response completion
     res.on('finish', () => {
         const responseTime = Date.now() - startTime;
+        // Update metrics based on response status
         if (res.statusCode >= 200 && res.statusCode < 400) {
             metrics.successfulRequests++;
         }
         else {
             metrics.failedRequests++;
         }
+        // Update average response time
         metrics.averageResponseTime =
             (metrics.averageResponseTime * (metrics.totalRequests - 1) + responseTime) / metrics.totalRequests;
+        // Log metrics periodically
         if (metrics.totalRequests % 100 === 0) {
             logging_1.logger.info('System metrics update', {
                 totalRequests: metrics.totalRequests,
@@ -36,10 +45,16 @@ const requestMetrics = (_req, res, next) => {
     next();
 };
 exports.requestMetrics = requestMetrics;
+/**
+ * Enhanced health check endpoint
+ * Returns comprehensive system health information
+ */
 const healthCheck = (_req, res) => {
     const currentTime = Date.now();
     const uptime = currentTime - metrics.startTime;
+    // Update last health check time
     metrics.lastHealthCheck = currentTime;
+    // Check system health
     const isHealthy = uptime > 0 && metrics.totalRequests >= 0;
     const healthData = {
         status: isHealthy ? 'healthy' : 'unhealthy',
@@ -69,6 +84,10 @@ const healthCheck = (_req, res) => {
     res.status(statusCode).json(healthData);
 };
 exports.healthCheck = healthCheck;
+/**
+ * System metrics endpoint
+ * Returns detailed system performance metrics
+ */
 const systemMetrics = (_req, res) => {
     const currentTime = Date.now();
     const uptime = currentTime - metrics.startTime;
@@ -107,6 +126,9 @@ const systemMetrics = (_req, res) => {
     res.json(metricsData);
 };
 exports.systemMetrics = systemMetrics;
+/**
+ * Get current metrics for internal use
+ */
 const getMetrics = () => ({ ...metrics });
 exports.getMetrics = getMetrics;
 //# sourceMappingURL=monitoring.js.map

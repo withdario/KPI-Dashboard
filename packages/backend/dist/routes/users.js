@@ -5,6 +5,7 @@ const userManagementService_1 = require("../services/userManagementService");
 const auth_1 = require("../middleware/auth");
 const router = (0, express_1.Router)();
 const userManagementService = new userManagementService_1.UserManagementService();
+// Create new user
 router.post('/', auth_1.authenticateToken, async (req, res) => {
     try {
         const { email, password, firstName, lastName, businessEntityId } = req.body;
@@ -37,6 +38,7 @@ router.post('/', auth_1.authenticateToken, async (req, res) => {
         });
     }
 });
+// Get all users
 router.get('/', auth_1.authenticateToken, async (req, res) => {
     try {
         const { businessEntityId } = req.query;
@@ -56,6 +58,7 @@ router.get('/', auth_1.authenticateToken, async (req, res) => {
         });
     }
 });
+// Get user by ID
 router.get('/:id', auth_1.authenticateToken, async (req, res) => {
     try {
         const { id } = req.params;
@@ -75,6 +78,7 @@ router.get('/:id', auth_1.authenticateToken, async (req, res) => {
         });
     }
 });
+// Update user
 router.put('/:id', auth_1.authenticateToken, async (req, res) => {
     try {
         const { id } = req.params;
@@ -100,6 +104,7 @@ router.put('/:id', auth_1.authenticateToken, async (req, res) => {
         });
     }
 });
+// Update user profile (limited fields)
 router.patch('/:id/profile', auth_1.authenticateToken, async (req, res) => {
     try {
         const { id } = req.params;
@@ -123,6 +128,7 @@ router.patch('/:id/profile', auth_1.authenticateToken, async (req, res) => {
         });
     }
 });
+// Deactivate user
 router.patch('/:id/deactivate', auth_1.authenticateToken, async (req, res) => {
     try {
         const { id } = req.params;
@@ -142,6 +148,7 @@ router.patch('/:id/deactivate', auth_1.authenticateToken, async (req, res) => {
         });
     }
 });
+// Reactivate user
 router.patch('/:id/reactivate', auth_1.authenticateToken, async (req, res) => {
     try {
         const { id } = req.params;
@@ -161,6 +168,7 @@ router.patch('/:id/reactivate', auth_1.authenticateToken, async (req, res) => {
         });
     }
 });
+// Change user password
 router.patch('/:id/password', auth_1.authenticateToken, async (req, res) => {
     try {
         const { id } = req.params;
@@ -188,6 +196,7 @@ router.patch('/:id/password', auth_1.authenticateToken, async (req, res) => {
         });
     }
 });
+// Delete user
 router.delete('/:id', auth_1.authenticateToken, async (req, res) => {
     try {
         const { id } = req.params;
@@ -207,6 +216,7 @@ router.delete('/:id', auth_1.authenticateToken, async (req, res) => {
         });
     }
 });
+// Get user stats
 router.get('/stats/summary', auth_1.authenticateToken, async (req, res) => {
     try {
         const { businessEntityId } = req.query;
@@ -226,6 +236,7 @@ router.get('/stats/summary', auth_1.authenticateToken, async (req, res) => {
         });
     }
 });
+// Search users
 router.get('/search/:query', auth_1.authenticateToken, async (req, res) => {
     try {
         const { query } = req.params;

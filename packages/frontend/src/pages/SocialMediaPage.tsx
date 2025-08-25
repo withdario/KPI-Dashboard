@@ -1,6 +1,6 @@
-import DashboardLayout from '@/components/DashboardLayout';
-import DashboardGrid from '@/components/DashboardGrid';
-import DashboardWidget from '@/components/DashboardWidget';
+import DashboardLayout from '../components/DashboardLayout';
+import DashboardGrid from '../components/DashboardGrid';
+import DashboardWidget from '../components/DashboardWidget';
 import { Share2, Users, Heart, MessageCircle, Eye, TrendingUp, DollarSign, Target, Facebook, Instagram, Twitter, Linkedin } from 'lucide-react';
 
 const SocialMediaPage = () => {

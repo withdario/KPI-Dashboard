@@ -1,6 +1,6 @@
-import DashboardLayout from '@/components/DashboardLayout';
-import DashboardGrid from '@/components/DashboardGrid';
-import DashboardWidget from '@/components/DashboardWidget';
+import DashboardLayout from '../components/DashboardLayout';
+import DashboardGrid from '../components/DashboardGrid';
+import DashboardWidget from '../components/DashboardWidget';
 import { Users, UserPlus, UserCheck, UserX, Mail, Calendar, Shield, Activity } from 'lucide-react';
 
 const UsersPage = () => {

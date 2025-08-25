@@ -2,10 +2,14 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const dotenv_1 = require("dotenv");
 const path_1 = require("path");
+// Load test environment variables
 (0, dotenv_1.config)({ path: (0, path_1.resolve)(__dirname, '../../.env.test') });
+// Test environment setup
 process.env.NODE_ENV = 'test';
+// DATABASE_URL is now loaded from .env.test file
 process.env.JWT_SECRET = 'test-jwt-secret';
 process.env.REDIS_URL = 'redis://localhost:6379';
+// Mock environment variables that might be used in tests
 process.env.ALLOWED_WEBHOOK_IPS = '127.0.0.1,::1,localhost';
 process.env.WEBHOOK_SIGNATURE_SECRET = 'test-webhook-secret';
 process.env.CORS_ORIGIN = 'http://localhost:3001';

@@ -1,6 +1,6 @@
-import DashboardLayout from '@/components/DashboardLayout';
-import DashboardGrid from '@/components/DashboardGrid';
-import DashboardWidget from '@/components/DashboardWidget';
+import DashboardLayout from '../components/DashboardLayout';
+import DashboardGrid from '../components/DashboardGrid';
+import DashboardWidget from '../components/DashboardWidget';
 import { Settings, Database, Shield, Bell, Palette, Globe, Key, Users, Zap, BarChart3 } from 'lucide-react';
 
 const SettingsPage = () => {

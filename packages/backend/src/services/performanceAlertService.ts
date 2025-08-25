@@ -106,7 +106,7 @@ export class PerformanceAlertService {
         metric: 'responseTime',
         condition: 'above',
         threshold: 1000,
-        severity: 'warning',
+        severity: 'medium',
         enabled: true,
         cooldown: 300,
         notificationChannels: ['dashboard'],
@@ -134,7 +134,7 @@ export class PerformanceAlertService {
         metric: 'throughput',
         condition: 'below',
         threshold: 10,
-        severity: 'warning',
+        severity: 'medium', // Changed from 'warning' to 'medium'
         enabled: true,
         cooldown: 300,
         notificationChannels: ['dashboard'],
@@ -164,7 +164,7 @@ export class PerformanceAlertService {
         metric: 'connectionPoolUsage',
         condition: 'above',
         threshold: 80,
-        severity: 'warning',
+        severity: 'medium',
         enabled: true,
         cooldown: 300,
         notificationChannels: ['dashboard'],
@@ -194,7 +194,7 @@ export class PerformanceAlertService {
         metric: 'memoryUsage',
         condition: 'above',
         threshold: 80,
-        severity: 'warning',
+        severity: 'medium',
         enabled: true,
         cooldown: 300,
         notificationChannels: ['dashboard'],
@@ -208,7 +208,7 @@ export class PerformanceAlertService {
         metric: 'diskUsage',
         condition: 'above',
         threshold: 85,
-        severity: 'warning',
+        severity: 'medium',
         enabled: true,
         cooldown: 600,
         notificationChannels: ['dashboard'],
@@ -238,7 +238,7 @@ export class PerformanceAlertService {
         metric: 'bundleSize',
         condition: 'above',
         threshold: 2048, // 2MB
-        severity: 'warning',
+        severity: 'medium',
         enabled: true,
         cooldown: 600,
         notificationChannels: ['dashboard'],
@@ -394,15 +394,18 @@ export class PerformanceAlertService {
 
   // Evaluate condition
   private evaluateCondition(value: number, condition: string, threshold: number | string): boolean {
+    // Convert threshold to number for comparison
+    const thresholdNum = typeof threshold === 'string' ? parseFloat(threshold) || 0 : threshold;
+    
     switch (condition) {
       case 'above':
-        return value > threshold;
+        return value > thresholdNum;
       case 'below':
-        return value < threshold;
+        return value < thresholdNum;
       case 'equals':
-        return value === threshold;
+        return value === thresholdNum;
       case 'not_equals':
-        return value !== threshold;
+        return value !== thresholdNum;
       case 'contains':
         return String(value).includes(String(threshold));
       case 'not_contains':
@@ -653,7 +656,7 @@ export class PerformanceAlertService {
     const dismissedAlerts = this.alerts.filter(a => a.status === 'dismissed');
 
     const criticalAlerts = this.alerts.filter(a => a.severity === 'critical');
-    const warningAlerts = this.alerts.filter(a => a.severity === 'warning');
+    const warningAlerts = this.alerts.filter(a => a.severity === 'medium');
     const infoAlerts = this.alerts.filter(a => a.severity === 'low');
 
     const alertsByCategory = this.alerts.reduce((acc, alert) => {

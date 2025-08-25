@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, Home, BarChart3, TrendingUp, Settings, LogOut, User, ChevronRight } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
-import { TOUCH_BUTTON, NAV_RESPONSIVE } from '@/utils/responsive';
+import { useAuth } from '../contexts/AuthContext';
+import { TOUCH_BUTTON, NAV_RESPONSIVE } from '../utils/responsive';
 
 interface MobileNavigationProps {
   isOpen: boolean;

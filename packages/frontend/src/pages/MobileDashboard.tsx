@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
-import DashboardLayout from '@/components/DashboardLayout';
-import MobileChart from '@/components/MobileChart';
-import MobileDataTable from '@/components/MobileDataTable';
-import MobileForm from '@/components/MobileForm';
-import MobileModal from '@/components/MobileModal';
-import MobileNotification, { useNotifications } from '@/components/MobileNotification';
-import MobileLoading, { MobileSkeleton } from '@/components/MobileLoading';
-import SimpleLineChart from '@/components/SimpleLineChart';
-import { useResponsive } from '@/utils/responsive';
-import { TOUCH_BUTTON, RESPONSIVE_SPACING, MOBILE_FIRST } from '@/utils/responsive';
+import DashboardLayout from '../components/DashboardLayout';
+import MobileChart from '../components/MobileChart';
+import MobileDataTable from '../components/MobileDataTable';
+import MobileForm from '../components/MobileForm';
+import MobileModal from '../components/MobileModal';
+import MobileNotification, { useNotifications } from '../components/MobileNotification';
+import MobileLoading, { MobileSkeleton } from '../components/MobileLoading';
+import SimpleLineChart from '../components/SimpleLineChart';
+import { useResponsive } from '../utils/responsive';
+import { TOUCH_BUTTON, RESPONSIVE_SPACING, MOBILE_FIRST } from '../utils/responsive';
 
 const MobileDashboard: React.FC = () => {
   const { isMobile, isTablet, isDesktop } = useResponsive();

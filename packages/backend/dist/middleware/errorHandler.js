@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getCircuitBreakerHealth = exports.withGracefulDegradation = exports.withRetry = exports.withCircuitBreaker = exports.asyncHandler = exports.notFoundHandler = exports.errorHandler = exports.getCircuitBreaker = exports.RateLimitError = exports.ConflictError = exports.NotFoundError = exports.AuthorizationError = exports.AuthenticationError = exports.ValidationError = exports.ExternalApiError = exports.DatabaseError = exports.ApiError = void 0;
 const logging_1 = require("./logging");
+// Enhanced error classes for different error types
 class ApiError extends Error {
     statusCode;
     isOperational;
@@ -120,6 +121,7 @@ class CircuitBreaker {
         return { ...this.state };
     }
 }
+// Global circuit breaker instances
 const circuitBreakers = new Map();
 const getCircuitBreaker = (name) => {
     if (!circuitBreakers.has(name)) {
@@ -128,12 +130,18 @@ const getCircuitBreaker = (name) => {
     return circuitBreakers.get(name);
 };
 exports.getCircuitBreaker = getCircuitBreaker;
+/**
+ * Enhanced error handling middleware with circuit breaker support
+ * Provides standardized error responses, proper logging, and circuit breaker management
+ */
 const errorHandler = (err, req, res, _next) => {
+    // Default error values
     let statusCode = 500;
     let message = 'Internal Server Error';
     let isOperational = false;
     let retryable = false;
     let retryAfter;
+    // Handle custom API errors
     if (err instanceof ApiError) {
         statusCode = err.statusCode;
         message = err.message;
@@ -141,6 +149,7 @@ const errorHandler = (err, req, res, _next) => {
         retryable = err.retryable;
         retryAfter = err.retryAfter;
     }
+    // Handle specific error types with enhanced logic
     if (err.name === 'ValidationError') {
         statusCode = 400;
         message = 'Validation Error';
@@ -200,8 +209,9 @@ const errorHandler = (err, req, res, _next) => {
         statusCode = 503;
         message = 'Database connection failed';
         retryable = true;
-        retryAfter = 30;
+        retryAfter = 30; // Retry after 30 seconds
     }
+    // Log error with enhanced context
     logging_1.logger.error('Error occurred', {
         requestId: req.requestId,
         method: req.method,
@@ -217,6 +227,7 @@ const errorHandler = (err, req, res, _next) => {
         ip: req.ip,
         referer: req.get('Referer')
     });
+    // Create enhanced error response
     const errorResponse = {
         error: {
             message,
@@ -228,6 +239,7 @@ const errorHandler = (err, req, res, _next) => {
             ...(retryAfter !== undefined && { retryAfter })
         }
     };
+    // Add circuit breaker information if available
     const circuitBreakerName = req.get('X-Circuit-Breaker-Name');
     if (circuitBreakerName && circuitBreakers.has(circuitBreakerName)) {
         const cb = circuitBreakers.get(circuitBreakerName);
@@ -238,6 +250,7 @@ const errorHandler = (err, req, res, _next) => {
             ...(state.isOpen && { nextAttemptTime: new Date(state.nextAttemptTime).toISOString() })
         };
     }
+    // Add details in development mode
     if (process.env.NODE_ENV === 'development') {
         errorResponse.details = {
             stack: err.stack,
@@ -245,9 +258,13 @@ const errorHandler = (err, req, res, _next) => {
             errorType: err.constructor.name
         };
     }
+    // Send error response
     res.status(statusCode).json(errorResponse);
 };
 exports.errorHandler = errorHandler;
+/**
+ * 404 handler for unmatched routes
+ */
 const notFoundHandler = (req, res) => {
     const errorResponse = {
         error: {
@@ -262,8 +279,13 @@ const notFoundHandler = (req, res) => {
     res.status(404).json(errorResponse);
 };
 exports.notFoundHandler = notFoundHandler;
+/**
+ * Enhanced async error wrapper with circuit breaker support
+ * Catches async errors and passes them to error handler
+ */
 const asyncHandler = (fn, circuitBreakerName) => {
     return (req, res, next) => {
+        // Add circuit breaker name to request headers for error context
         if (circuitBreakerName) {
             req.headers['X-Circuit-Breaker-Name'] = circuitBreakerName;
         }
@@ -271,6 +293,9 @@ const asyncHandler = (fn, circuitBreakerName) => {
     };
 };
 exports.asyncHandler = asyncHandler;
+/**
+ * Circuit breaker wrapper for external API calls
+ */
 const withCircuitBreaker = (name, operation, fallback) => {
     const cb = (0, exports.getCircuitBreaker)(name);
     if (!cb.canExecute()) {
@@ -291,6 +316,9 @@ const withCircuitBreaker = (name, operation, fallback) => {
     });
 };
 exports.withCircuitBreaker = withCircuitBreaker;
+/**
+ * Retry wrapper with exponential backoff
+ */
 const withRetry = async (operation, maxRetries = 3, baseDelay = 1000, maxDelay = 30000) => {
     let lastError;
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
@@ -302,8 +330,9 @@ const withRetry = async (operation, maxRetries = 3, baseDelay = 1000, maxDelay =
             if (attempt === maxRetries) {
                 break;
             }
+            // Calculate delay with exponential backoff
             const delay = Math.min(baseDelay * Math.pow(2, attempt), maxDelay);
-            const jitter = Math.random() * 0.1 * delay;
+            const jitter = Math.random() * 0.1 * delay; // Add 10% jitter
             const totalDelay = delay + jitter;
             logging_1.logger.info(`Retry attempt ${attempt + 1}/${maxRetries} after ${totalDelay}ms`, {
                 attempt: attempt + 1,
@@ -317,10 +346,16 @@ const withRetry = async (operation, maxRetries = 3, baseDelay = 1000, maxDelay =
     throw lastError;
 };
 exports.withRetry = withRetry;
+/**
+ * Graceful degradation wrapper
+ */
 const withGracefulDegradation = (primaryOperation, fallbackOperation, circuitBreakerName) => {
     return (0, exports.withCircuitBreaker)(circuitBreakerName || 'graceful-degradation', primaryOperation, fallbackOperation);
 };
 exports.withGracefulDegradation = withGracefulDegradation;
+/**
+ * Health check for circuit breakers
+ */
 const getCircuitBreakerHealth = () => {
     const health = {};
     for (const [name, cb] of circuitBreakers) {
