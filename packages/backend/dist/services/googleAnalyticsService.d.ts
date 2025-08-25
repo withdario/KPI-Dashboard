@@ -1,4 +1,4 @@
-import { GA4Metrics } from '../types/googleAnalytics';
+import { GA4Metrics, GA4MetricsRequest, GA4MetricsResponse } from '../types/googleAnalytics';
 export declare class GoogleAnalyticsService {
     private oauth2Client;
     private analyticsDataClient;
@@ -14,10 +14,17 @@ export declare class GoogleAnalyticsService {
         expiryDate: Date;
     }>;
     setCredentials(accessToken: string, refreshToken?: string): void;
+    getMetrics(request: GA4MetricsRequest): Promise<GA4MetricsResponse>;
+    validatePropertyAccess(propertyId: string): Promise<boolean>;
+    getAvailableProperties(): Promise<Array<{
+        propertyId: string;
+        displayName: string;
+    }>>;
+    checkHealth(): Promise<{
+        status: 'healthy' | 'degraded' | 'unhealthy';
+        message: string;
+    }>;
     getBasicMetrics(propertyId: string, startDate: string, endDate: string): Promise<GA4Metrics[]>;
-    private parseMetricsResponse;
-    isTokenExpired(expiryDate: Date): boolean;
-    getTokenExpirySeconds(expiryDate: Date): number;
     validatePropertyId(propertyId: string): boolean;
 }
 //# sourceMappingURL=googleAnalyticsService.d.ts.map

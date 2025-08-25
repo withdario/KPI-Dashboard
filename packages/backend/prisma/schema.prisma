@@ -48,6 +48,15 @@ model BusinessEntity {
   users      User[]
   googleAnalytics GoogleAnalyticsIntegration[]
   n8nIntegrations N8nIntegration[]
+  metrics    Metric[]
+  automationExecutions AutomationExecution[]
+  dataArchives DataArchive[]
+  syncJobs   SyncJob[]
+  syncConfig SyncConfig?
+  backupConfigs BackupConfig[]
+  backupJobs BackupJob[]
+  recoveryJobs RecoveryJob[]
+  disasterRecoveryPlans DisasterRecoveryPlan[]
   
   @@map("business_entities")
   @@index([domain])
@@ -132,4 +141,298 @@ model N8nWebhookEvent {
   @@index([status])
   @@index([startTime])
   @@index([createdAt])
+}
+
+// Metrics Storage
+model Metric {
+  id                String   @id @default(cuid())
+  businessEntityId  String
+  metricType        String   // ga4_pageview, ga4_session, ga8_user, n8n_workflow_execution, custom
+  metricName        String   // sessions, users, pageviews, workflow_duration, etc.
+  metricValue       Float
+  metricUnit        String?  // count, percentage, duration_ms, etc.
+  source            String   // google_analytics, n8n, custom
+  sourceId          String?  // GA4 property ID, n8n workflow ID, etc.
+  date              DateTime // Date for the metric (can be daily, hourly, etc.)
+  timezone          String   @default("UTC")
+  metadata          Json     @default("{}") // Flexible JSONB for additional data
+  tags              String[] // Array of tags for categorization
+  isArchived        Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  // Relationships
+  businessEntity    BusinessEntity @relation(fields: [businessEntityId], references: [id])
+  
+  @@map("metrics")
+  @@index([businessEntityId])
+  @@index([metricType])
+  @@index([metricName])
+  @@index([source])
+  @@index([date])
+  @@index([isArchived])
+  @@index([businessEntityId, metricType, date]) // Composite index for common queries
+  @@index([businessEntityId, source, date]) // Composite index for source-based queries
+}
+
+// Automation Executions
+model AutomationExecution {
+  id                String   @id @default(cuid())
+  businessEntityId  String
+  automationType    String   // n8n_workflow, zapier_automation, custom_script
+  automationName    String   // Human-readable name of the automation
+  executionId       String   // Unique execution identifier from source system
+  status            String   // running, completed, failed, cancelled, pending
+  startTime         DateTime
+  endTime           DateTime?
+  duration          Int?     // Duration in milliseconds
+  triggerType       String   // scheduled, manual, webhook, event_based
+  triggerData       Json     @default("{}") // Data that triggered the automation
+  inputData         Json     @default("{}") // Input data for the automation
+  outputData        Json     @default("{}") // Output/result data
+  errorMessage      String?
+  errorCode         String?
+  retryCount        Int      @default(0)
+  maxRetries        Int      @default(3)
+  nextRetryAt       DateTime?
+  metadata          Json     @default("{}") // Additional execution metadata
+  tags              String[] // Array of tags for categorization
+  isArchived        Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  // Relationships
+  businessEntity    BusinessEntity @relation(fields: [businessEntityId], references: [id])
+  
+  @@map("automation_executions")
+  @@index([businessEntityId])
+  @@index([automationType])
+  @@index([status])
+  @@index([startTime])
+  @@index([executionId])
+  @@index([isArchived])
+  @@index([businessEntityId, automationType, status]) // Composite index for automation status queries
+  @@index([businessEntityId, status, startTime]) // Composite index for status and time queries
+  @@index([businessEntityId, triggerType, startTime]) // Composite index for trigger-based queries
+}
+
+// Data Archival for Historical Storage
+model DataArchive {
+  id                String   @id @default(cuid())
+  businessEntityId  String
+  archiveType       String   // metrics, automation_executions, webhook_events
+  sourceTable       String   // Name of the original table
+  sourceRecordId    String   // ID of the original record
+  archivedData      Json     // Complete archived record data
+  archiveDate       DateTime // When the data was archived
+  retentionPolicy   String   // Policy that triggered the archive
+  compressionRatio  Float?   // Compression ratio achieved
+  storageLocation   String?  // Where the archive is stored (if applicable)
+  isRestorable      Boolean  @default(true) // Whether the data can be restored
+  createdAt         DateTime @default(now())
+  
+  // Relationships
+  businessEntity    BusinessEntity @relation(fields: [businessEntityId], references: [id])
+  
+  @@map("data_archives")
+  @@index([businessEntityId])
+  @@index([archiveType])
+  @@index([archiveDate])
+  @@index([sourceTable])
+  @@index([businessEntityId, archiveType, archiveDate]) // Composite index for archive queries
+}
+
+// Data Synchronization Jobs
+model SyncJob {
+  id                String   @id @default(cuid())
+  businessEntityId  String
+  jobType          String   // ga4_daily, n8n_realtime, manual, cleanup
+  status           String   // pending, running, completed, failed, cancelled
+  startTime        DateTime
+  endTime          DateTime?
+  duration         Int?     // Duration in milliseconds
+  errorMessage     String?
+  errorCode        String?
+  retryCount       Int      @default(0)
+  maxRetries       Int      @default(3)
+  nextRetryAt      DateTime?
+  metadata         Json     @default("{}") // Additional job metadata
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  
+  // Relationships
+  businessEntity   BusinessEntity @relation(fields: [businessEntityId], references: [id])
+  
+  @@map("sync_jobs")
+  @@index([businessEntityId])
+  @@index([jobType])
+  @@index([status])
+  @@index([startTime])
+  @@index([businessEntityId, jobType, status]) // Composite index for job queries
+  @@index([businessEntityId, status, startTime]) // Composite index for status and time queries
+}
+
+// Data Synchronization Configuration
+model SyncConfig {
+  id                    String   @id @default(cuid())
+  businessEntityId      String   @unique
+  ga4SyncEnabled       Boolean  @default(true)
+  ga4SyncSchedule      String   @default("0 2 * * *") // Daily at 2 AM UTC
+  n8nSyncEnabled       Boolean  @default(true)
+  n8nSyncSchedule      String   @default("*/5 * * * *") // Every 5 minutes
+  cleanupSyncEnabled   Boolean  @default(true)
+  cleanupSyncSchedule  String   @default("0 3 * * 0") // Weekly on Sunday at 3 AM UTC
+  retryConfig          Json     @default("{\"maxRetries\":3,\"initialDelay\":60000,\"maxDelay\":3600000,\"backoffMultiplier\":2}")
+  alerting             Json     @default("{\"enabled\":false,\"emailRecipients\":[]}")
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  
+  // Relationships
+  businessEntity       BusinessEntity @relation(fields: [businessEntityId], references: [id])
+  
+  @@map("sync_configs")
+  @@index([businessEntityId])
+}
+
+// Backup Configuration
+model BackupConfig {
+  id                String   @id @default(cuid())
+  businessEntityId  String
+  backupType        String   // database_full, database_incremental, file_system, application_data, configuration, logs
+  schedule          String   // Cron expression
+  retentionDays     Int
+  compressionEnabled Boolean  @default(false)
+  encryptionEnabled Boolean  @default(false)
+  encryptionKey     String?
+  storageLocation   String   // local, s3, gcs, azure_blob, ftp, sftp
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  // Relationships
+  businessEntity    BusinessEntity @relation(fields: [businessEntityId], references: [id])
+  backupJobs        BackupJob[]
+  
+  @@map("backup_configs")
+  @@index([businessEntityId])
+  @@index([backupType])
+  @@index([isActive])
+  @@index([businessEntityId, backupType])
+}
+
+// Backup Jobs
+model BackupJob {
+  id                String   @id @default(cuid())
+  businessEntityId  String
+  backupConfigId    String
+  status            String   // pending, running, completed, failed, cancelled, verifying
+  startTime         DateTime
+  endTime           DateTime?
+  duration          Int?     // Duration in milliseconds
+  fileSize          Int?     // Size in bytes
+  filePath          String?
+  checksum          String?
+  errorMessage      String?
+  errorCode         String?
+  retryCount        Int      @default(0)
+  maxRetries        Int      @default(3)
+  nextRetryAt       DateTime?
+  metadata          Json     @default("{}")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  // Relationships
+  businessEntity    BusinessEntity @relation(fields: [businessEntityId], references: [id])
+  backupConfig      BackupConfig @relation(fields: [backupConfigId], references: [id])
+  verifications     BackupVerification[]
+  recoveryJobs      RecoveryJob[]
+  
+  @@map("backup_jobs")
+  @@index([businessEntityId])
+  @@index([backupConfigId])
+  @@index([status])
+  @@index([startTime])
+  @@index([businessEntityId, status])
+  @@index([businessEntityId, backupConfigId, status])
+}
+
+// Backup Verification
+model BackupVerification {
+  id                String   @id @default(cuid())
+  backupJobId       String
+  status            String   // pending, running, passed, failed, cancelled
+  verificationType  String   // checksum, integrity, restore_test, full_verification
+  startTime         DateTime
+  endTime           DateTime?
+  duration          Int?     // Duration in milliseconds
+  checksumVerified  Boolean  @default(false)
+  integrityVerified Boolean  @default(false)
+  restoreTested     Boolean  @default(false)
+  errorMessage      String?
+  metadata          Json     @default("{}")
+  createdAt         DateTime @default(now())
+  
+  // Relationships
+  backupJob         BackupJob @relation(fields: [backupJobId], references: [id])
+  
+  @@map("backup_verifications")
+  @@index([backupJobId])
+  @@index([status])
+  @@index([startTime])
+  @@index([verificationType])
+}
+
+// Recovery Jobs
+model RecoveryJob {
+  id                String   @id @default(cuid())
+  businessEntityId  String
+  backupJobId       String
+  status            String   // pending, running, completed, failed, cancelled, verifying
+  recoveryType      String   // full_restore, point_in_time, selective_restore, disaster_recovery
+  startTime         DateTime
+  endTime           DateTime?
+  duration          Int?     // Duration in milliseconds
+  targetLocation    String
+  recoveredRecords  Int?
+  errorMessage      String?
+  errorCode         String?
+  metadata          Json     @default("{}")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  // Relationships
+  businessEntity    BusinessEntity @relation(fields: [businessEntityId], references: [id])
+  backupJob         BackupJob @relation(fields: [backupJobId], references: [id])
+  
+  @@map("recovery_jobs")
+  @@index([businessEntityId])
+  @@index([backupJobId])
+  @@index([status])
+  @@index([startTime])
+  @@index([recoveryType])
+  @@index([businessEntityId, status])
+}
+
+// Disaster Recovery Plans
+model DisasterRecoveryPlan {
+  id                String   @id @default(cuid())
+  businessEntityId  String
+  planName          String
+  description       String
+  rto               Int      // Recovery Time Objective in minutes
+  rpo               Int      // Recovery Point Objective in minutes
+  procedures        Json     // Array of RecoveryProcedure objects
+  contacts          Json     // Array of RecoveryContact objects
+  isActive          Boolean  @default(true)
+  lastTestedAt      DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  // Relationships
+  businessEntity    BusinessEntity @relation(fields: [businessEntityId], references: [id])
+  
+  @@map("disaster_recovery_plans")
+  @@index([businessEntityId])
+  @@index([isActive])
+  @@index([planName])
 }

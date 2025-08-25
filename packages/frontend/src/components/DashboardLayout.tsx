@@ -1,90 +1,92 @@
-import DashboardNavigation from './DashboardNavigation';
-import ThemeToggle from './ThemeToggle';
+import React, { useState } from 'react';
+import { Menu, X } from 'lucide-react';
+import { TOUCH_BUTTON, RESPONSIVE_SPACING } from '@/utils/responsive';
+import BreadcrumbNavigation from './BreadcrumbNavigation';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
-  title?: string;
-  subtitle?: string;
 }
 
-const DashboardLayout: React.FC<DashboardLayoutProps> = ({ 
-  children, 
-  title, 
-  subtitle 
-}) => {
+const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
-        <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
-          {/* Mobile Header */}
-          <div className="lg:hidden flex items-center">
-            <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
-              BI Platform
-            </h1>
-          </div>
-
-          {/* Desktop Header */}
-          <div className="hidden lg:flex lg:flex-1 lg:items-center lg:justify-between">
-            <div>
-              {title && (
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {title}
-                </h1>
-              )}
-              {subtitle && (
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                  {subtitle}
-                </p>
-              )}
+      <header className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center">
+              <h1 className="text-lg sm:text-xl font-semibold text-gray-900">Business Intelligence Dashboard</h1>
             </div>
-          </div>
+            
+            {/* Desktop Navigation */}
+            <nav className="hidden md:flex items-center space-x-4">
+              <a href="/dashboard" className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
+                Dashboard
+              </a>
+              <a href="/dashboard/business-overview" className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
+                Business Overview
+              </a>
+              <a href="/dashboard/analytics" className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
+                Analytics
+              </a>
+              <a href="/dashboard/automation" className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
+                Automation
+              </a>
+              <a href="/dashboard/mobile" className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
+                Mobile Demo
+              </a>
+            </nav>
 
-          {/* Header Actions */}
-          <div className="flex items-center space-x-4">
-            <ThemeToggle />
-            <div className="h-8 w-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                U
-              </span>
+            {/* Mobile Menu Button */}
+            <div className="md:hidden">
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className={TOUCH_BUTTON.icon}
+                aria-label="Toggle dashboard menu"
+              >
+                {isMobileMenuOpen ? (
+                  <X className="w-5 h-5" />
+                ) : (
+                  <Menu className="w-5 h-5" />
+                )}
+              </button>
             </div>
           </div>
         </div>
+
+        {/* Mobile Navigation */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden border-t border-gray-200">
+            <nav className="px-4 py-2 space-y-1">
+              <a href="/dashboard" className="block px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md text-sm font-medium">
+                Dashboard
+              </a>
+              <a href="/dashboard/business-overview" className="block px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md text-sm font-medium">
+                Business Overview
+              </a>
+              <a href="/dashboard/analytics" className="block px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md text-sm font-medium">
+                Analytics
+              </a>
+              <a href="/dashboard/automation" className="block px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md text-sm font-medium">
+                Automation
+              </a>
+              <a href="/dashboard/mobile" className="block px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md text-sm font-medium">
+                Mobile Demo
+              </a>
+            </nav>
+          </div>
+        )}
       </header>
 
-      <div className="flex">
-        {/* Sidebar */}
-        <div className="hidden lg:flex lg:flex-shrink-0">
-          <DashboardNavigation />
-        </div>
+      {/* Breadcrumb Navigation */}
+      <BreadcrumbNavigation />
 
-        {/* Main Content */}
-        <div className="flex-1">
-          {/* Mobile Navigation */}
-          <div className="lg:hidden">
-            <DashboardNavigation />
-          </div>
-
-          {/* Page Content */}
-          <main className="p-4 sm:p-6 lg:p-8">
-            {/* Page Header for Mobile */}
-            {title && (
-              <div className="lg:hidden mb-6">
-                <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
-                  {title}
-                </h1>
-                {subtitle && (
-                  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                    {subtitle}
-                  </p>
-                )}
-              </div>
-            )}
-            
-            {children}
-          </main>
-        </div>
-      </div>
+      {/* Main Content */}
+      <main className={`flex-1 ${RESPONSIVE_SPACING.md}`}>
+        {children}
+      </main>
     </div>
   );
 };

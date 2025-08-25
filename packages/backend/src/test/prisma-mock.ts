@@ -20,10 +20,24 @@ export const createMockPrismaClient = () => {
       deleteMany: jest.fn(),
     },
     user: {
+      findUnique: jest.fn(),
+      findFirst: jest.fn(),
+      findMany: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
       deleteMany: jest.fn(),
+      count: jest.fn(),
     },
     businessEntity: {
+      findUnique: jest.fn(),
+      findFirst: jest.fn(),
+      findMany: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
       deleteMany: jest.fn(),
+      count: jest.fn(),
     },
     $disconnect: jest.fn(),
   } as unknown as PrismaClient;
@@ -205,4 +219,80 @@ export const setupDefaultMocks = (mockPrisma: any) => {
   mockPrisma.googleAnalyticsIntegration.deleteMany.mockResolvedValue({ count: 0 });
   mockPrisma.user.deleteMany.mockResolvedValue({ count: 0 });
   mockPrisma.businessEntity.deleteMany.mockResolvedValue({ count: 0 });
+
+  // Mock user operations
+  mockPrisma.user.findUnique.mockResolvedValue(null);
+  mockPrisma.user.findFirst.mockResolvedValue(null);
+  mockPrisma.user.findMany.mockResolvedValue([]);
+  mockPrisma.user.create.mockResolvedValue({
+    id: 'test-user-id',
+    email: 'test@example.com',
+    firstName: 'Test',
+    lastName: 'User',
+    emailVerified: false,
+    businessEntityId: 'test-business-entity-id',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  });
+  mockPrisma.user.update.mockResolvedValue({
+    id: 'test-user-id',
+    email: 'test@example.com',
+    firstName: 'Updated',
+    lastName: 'User',
+    emailVerified: true,
+    businessEntityId: 'test-business-entity-id',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  });
+  mockPrisma.user.count.mockResolvedValue(1);
+
+  // Mock businessEntity operations
+  mockPrisma.businessEntity.findUnique.mockResolvedValue({
+    id: 'test-business-entity-id',
+    name: 'Test Business',
+    description: 'Test Description',
+    domain: 'test.com',
+    isActive: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  });
+  mockPrisma.businessEntity.findFirst.mockResolvedValue({
+    id: 'test-business-entity-id',
+    name: 'Test Business',
+    description: 'Test Description',
+    domain: 'test.com',
+    isActive: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  });
+  mockPrisma.businessEntity.findMany.mockResolvedValue([
+    {
+      id: 'test-business-entity-id',
+      name: 'Test Business',
+      description: 'Test Description',
+      domain: 'test.com',
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }
+  ]);
+  mockPrisma.businessEntity.create.mockResolvedValue({
+    id: 'new-business-entity-id',
+    name: 'New Business',
+    description: 'New Description',
+    domain: 'new.com',
+    isActive: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  });
+  mockPrisma.businessEntity.update.mockResolvedValue({
+    id: 'test-business-entity-id',
+    name: 'Updated Business',
+    description: 'Updated Description',
+    domain: 'updated.com',
+    isActive: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  });
+  mockPrisma.businessEntity.count.mockResolvedValue(1);
 };

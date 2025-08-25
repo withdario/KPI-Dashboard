@@ -1,103 +1,166 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import compression from 'compression';
-import dotenv from 'dotenv';
 
-// Import middleware
-import { generalRateLimit } from './middleware/rateLimit';
-import { requestLogging, errorLogging } from './middleware/logging';
-import { errorHandler, notFoundHandler } from './middleware/errorHandler';
-import { requestMetrics, healthCheck, systemMetrics } from './middleware/monitoring';
+import { PrismaClient } from '@prisma/client';
+import PerformanceMonitoringService from './services/performanceMonitoringService';
+import DatabaseMonitoringService from './services/databaseMonitoringService';
+import PerformanceTestingService from './services/performanceTestingService';
+import PerformanceBottleneckService from './services/performanceBottleneckService';
+import PerformanceOptimizationService from './services/performanceOptimizationService';
+import DatabaseOptimizationService from './services/databaseOptimizationService';
+import ApiOptimizationService from './services/apiOptimizationService';
+import FrontendOptimizationService from './services/frontendOptimizationService';
+import PerformanceAlertService from './services/performanceAlertService';
+import { BackupService } from './services/backupService';
+import { SystemHealthService } from './services/systemHealthService';
 
 // Import routes
-import authRoutes from './routes/auth';
-import businessEntityRoutes from './routes/businessEntities';
-import userRoutes from './routes/users';
-import googleAnalyticsRoutes from './routes/googleAnalytics';
-import n8nRoutes from './routes/n8n';
+import performanceMonitoringRoutes from './routes/performanceMonitoring';
+import performanceBottleneckRoutes from './routes/performanceBottleneck';
+import performanceOptimizationRoutes from './routes/performanceOptimization';
+import performanceTestingRoutes from './routes/performanceTesting';
+import performanceAlertRoutes from './routes/performanceAlert';
+import databaseOptimizationRoutes from './routes/databaseOptimization';
+import apiOptimizationRoutes from './routes/apiOptimization';
+import frontendOptimizationRoutes from './routes/frontendOptimization';
+import BackupRoutes from './routes/backup';
+import systemHealthRoutes from './routes/systemHealth';
 
-// Load environment variables
-dotenv.config();
+// Import controllers
+import { PerformanceMonitoringController } from './controllers/performanceMonitoringController';
+import { PerformanceBottleneckController } from './controllers/performanceBottleneckController';
+import { PerformanceOptimizationController } from './controllers/performanceOptimizationController';
+import { PerformanceTestingController } from './controllers/performanceTestingController';
+import PerformanceAlertController from './controllers/performanceAlertController';
+import DatabaseOptimizationController from './controllers/databaseOptimizationController';
+import ApiOptimizationController from './controllers/apiOptimizationController';
+import FrontendOptimizationController from './controllers/frontendOptimizationController';
+import { BackupController } from './controllers/backupController';
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const port = process.env.PORT || 3000;
 
-// Middleware - Order is important!
+// Initialize Prisma
+const prisma = new PrismaClient();
+
+// Initialize services
+const performanceMonitoringService = new PerformanceMonitoringService();
+const databaseMonitoringService = new DatabaseMonitoringService(prisma, performanceMonitoringService);
+const performanceTestingService = new PerformanceTestingService(performanceMonitoringService, databaseMonitoringService);
+const performanceBottleneckService = new PerformanceBottleneckService(performanceMonitoringService);
+const performanceOptimizationService = new PerformanceOptimizationService(performanceMonitoringService, performanceBottleneckService);
+const databaseOptimizationService = new DatabaseOptimizationService(prisma, databaseMonitoringService, performanceMonitoringService);
+const apiOptimizationService = new ApiOptimizationService(performanceMonitoringService, databaseOptimizationService);
+const frontendOptimizationService = new FrontendOptimizationService(performanceMonitoringService);
+const backupService = new BackupService(prisma);
+const performanceAlertService = new PerformanceAlertService(performanceMonitoringService, databaseMonitoringService);
+const systemHealthService = new SystemHealthService(prisma);
+
+// Initialize controllers
+const performanceMonitoringController = new PerformanceMonitoringController(performanceMonitoringService);
+const performanceBottleneckController = new PerformanceBottleneckController(performanceBottleneckService);
+const performanceOptimizationController = new PerformanceOptimizationController(performanceOptimizationService);
+const performanceTestingController = new PerformanceTestingController(performanceTestingService);
+const performanceAlertController = new PerformanceAlertController(performanceAlertService);
+const databaseOptimizationController = new DatabaseOptimizationController(databaseOptimizationService);
+const apiOptimizationController = new ApiOptimizationController(apiOptimizationService);
+const frontendOptimizationController = new FrontendOptimizationController(frontendOptimizationService);
+const backupController = new BackupController(backupService);
+
+// Initialize route instances
+const backupRoutes = new BackupRoutes();
+
+// Set controllers for dependency injection
+performanceMonitoringRoutes.setMonitoringController(performanceMonitoringController);
+performanceBottleneckRoutes.setBottleneckController(performanceBottleneckController);
+performanceOptimizationRoutes.setOptimizationController(performanceOptimizationController);
+performanceTestingRoutes.setTestingController(performanceTestingController);
+performanceAlertRoutes.setAlertController(performanceAlertController);
+databaseOptimizationRoutes.setDatabaseOptimizationController(databaseOptimizationController);
+apiOptimizationRoutes.setApiOptimizationController(apiOptimizationController);
+frontendOptimizationRoutes.setFrontendOptimizationController(frontendOptimizationController);
+backupRoutes.setBackupController(backupController);
+
+// Middleware
 app.use(helmet());
-app.use(compression());
-app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3001',
-  credentials: true,
-}));
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(cors());
 
-// Custom middleware
-app.use(requestLogging);        // Add request ID and log requests
-app.use(requestMetrics);        // Track request metrics
-app.use(generalRateLimit);      // Apply rate limiting
+app.use(express.json());
 
-// Health check and monitoring endpoints
-app.get('/api/health', healthCheck);
-app.get('/api/metrics', systemMetrics);
 
-// API Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/business-entities', businessEntityRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/google-analytics', googleAnalyticsRoutes);
-app.use('/api/n8n', n8nRoutes);
+
+// Routes
+app.use('/api/performance', performanceMonitoringRoutes);
+app.use('/api/performance/bottlenecks', performanceBottleneckRoutes);
+app.use('/api/performance/optimization', performanceOptimizationRoutes);
+app.use('/api/performance/testing', performanceTestingRoutes);
+app.use('/api/performance/alerts', performanceAlertRoutes);
+app.use('/api/performance/database-optimization', databaseOptimizationRoutes);
+app.use('/api/performance/api-optimization', apiOptimizationRoutes);
+app.use('/api/performance/frontend-optimization', frontendOptimizationRoutes);
+app.use('/api/backup', backupRoutes.getRouter());
+app.use('/api/system-health', systemHealthRoutes);
 
 // Root route
-app.get('/', (_req, res) => {
+app.get('/', (req, res) => {
   res.json({
-    message: 'Business Intelligence Platform API',
+    message: 'Performance Monitoring API',
     version: '1.0.0',
-    status: 'running',
-    endpoints: {
-      health: '/api/health',
-      metrics: '/api/metrics',
-      auth: '/api/auth',
-      businessEntities: '/api/business-entities',
-      users: '/api/users',
-      googleAnalytics: '/api/google-analytics'
-    }
+    endpoints: [
+      '/api/performance',
+      '/api/performance/bottlenecks',
+      '/api/performance/optimization',
+      '/api/performance/testing',
+      '/api/performance/alerts',
+      '/api/performance/database-optimization',
+      '/api/performance/api-optimization',
+      '/api/performance/frontend-optimization',
+      '/api/backup',
+      '/api/system-health'
+    ]
   });
 });
 
-// Error handling - Must be last!
-app.use(notFoundHandler);       // 404 handler
-app.use(errorLogging);          // Log errors with request context
-app.use(errorHandler);          // Standardized error responses
+// Set global services for dependency injection
+global.systemHealthService = systemHealthService;
 
-// Start server for both local development and Vercel deployment
-const startServer = () => {
-  app.listen(Number(PORT), '0.0.0.0', () => {
-    // eslint-disable-next-line no-console
-    console.log(`🚀 Server running on port ${PORT}`);
-    // eslint-disable-next-line no-console
-    console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
-    // eslint-disable-next-line no-console
-    console.log(`📈 System metrics: http://localhost:${PORT}/api/metrics`);
-    // eslint-disable-next-line no-console
-    console.log(`🔐 Auth endpoints: http://localhost:${PORT}/api/auth`);
-    // eslint-disable-next-line no-console
-    console.log(`🏢 Business entities: http://localhost:${PORT}/api/business-entities`);
-    // eslint-disable-next-line no-console
-    console.log(`👥 User management: http://localhost:${PORT}/api/users`);
-    // eslint-disable-next-line no-console
-    console.log(`📊 Google Analytics: http://localhost:${PORT}/api/google-analytics`);
-    // eslint-disable-next-line no-console
-    console.log(`🔗 n8n Integration: http://localhost:${PORT}/api/n8n`);
-    // eslint-disable-next-line no-console
-    console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-  });
-};
+// Start services
+performanceMonitoringService.start();
+backupService.start();
+performanceAlertService.startMonitoring();
+systemHealthService.startMonitoring();
 
-// Start server if this is the main module OR if we're in Vercel
-if (require.main === module || process.env.VERCEL) {
-  startServer();
-}
+// Error handling middleware
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error(err.stack);
+  res.status(500).json({ error: 'Something went wrong!' });
+});
 
-export default app;
+// Start server
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
+  console.log('Performance monitoring service initialized');
+  console.log('Performance bottleneck service initialized');
+  console.log('Performance optimization service initialized');
+  console.log('Performance testing service initialized');
+  console.log('Performance alert service initialized');
+  console.log('Database optimization service initialized');
+  console.log('API optimization service initialized');
+  console.log('Frontend optimization service initialized');
+  console.log('Backup service initialized');
+  console.log('System health service initialized');
+});
+
+// Graceful shutdown
+process.on('SIGTERM', async () => {
+  console.log('SIGTERM received, shutting down gracefully');
+  await prisma.$disconnect();
+  process.exit(0);
+});
+
+process.on('SIGINT', async () => {
+  console.log('SIGINT received, shutting down gracefully');
+  await prisma.$disconnect();
+  process.exit(0);
+});

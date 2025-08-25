@@ -1,4 +1,33 @@
 markdownExploder: true
+
+# GLOBAL AGENT BEHAVIOR RULES
+# These rules apply to ALL AI agents and prevent overcomplication
+globalAgentRules:
+  # RESPONSE STYLE - Keep it simple and practical
+  responseStyle: "concise"
+  maxResponseLength: "medium"
+  avoidVerboseExplanations: true
+  
+  # COMPLEXITY CONTROL - Don't overengineer solutions
+  complexityLevel: "pragmatic"
+  avoidOvercomplication: true
+  skipUnnecessaryDetails: true
+  
+  # SOLUTION APPROACH - Focus on what works, not perfection
+  solutionApproach: "direct"
+  prioritizeWorkingOverPerfect: true
+  avoidTheoreticalOverkill: true
+  
+  # STORY & EPIC SIMPLICITY - Keep requirements minimal
+  storyComplexity: "minimal"
+  maxAcceptanceCriteria: 5
+  avoidOverDetailedStories: true
+  
+  # CODE SIMPLICITY - Simple solutions over complex architectures
+  codeComplexity: "minimal"
+  avoidOverArchitecting: true
+  preferSimpleOverElegant: true
+
 qa:
   qaLocation: docs/qa
 prd:

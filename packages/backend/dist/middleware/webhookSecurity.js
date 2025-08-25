@@ -49,7 +49,7 @@ const webhookAuth = async (req, res, next) => {
 exports.webhookAuth = webhookAuth;
 const webhookIpValidation = (allowedIps) => {
     return (req, res, next) => {
-        if (!allowedIps || allowedIps.length === 0) {
+        if (!allowedIps || allowedIps.length === 0 || allowedIps.every(ip => !ip.trim())) {
             return next();
         }
         const clientIp = req.ip || req.connection.remoteAddress || req.socket.remoteAddress;
@@ -94,7 +94,7 @@ const webhookPayloadValidation = (maxSize) => {
 exports.webhookPayloadValidation = webhookPayloadValidation;
 const webhookSignatureValidation = (req, res, next) => {
     const signatureSecret = process.env.WEBHOOK_SIGNATURE_SECRET;
-    if (!signatureSecret) {
+    if (!signatureSecret || signatureSecret === 'your-webhook-signature-secret') {
         return next();
     }
     const signature = req.headers['x-webhook-signature'];

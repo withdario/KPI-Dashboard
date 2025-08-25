@@ -1,75 +1,128 @@
 # Deployment Architecture
 
-## Container Architecture
+## Cloud-Native Architecture
 
-### Docker Configuration
+### Supabase Database Infrastructure
 
-```dockerfile
-# Backend Dockerfile
-FROM node:20-alpine AS backend
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --only=production
-COPY . .
-EXPOSE 3000
-CMD ["npm", "start"]
+The project uses Supabase PostgreSQL as the primary database, eliminating the need for local Docker containers and providing enterprise-grade database management.
 
-# Frontend Dockerfile
-FROM node:18-alpine AS frontend
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci
-COPY . .
-RUN npm run build
-FROM nginx:alpine
-COPY --from=frontend /app/build /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/nginx.conf
-EXPOSE 80
+#### Database Configuration
+
+```typescript
+// Database connection configuration
+const databaseConfig = {
+  // Production connection with connection pooling
+  DATABASE_URL: "postgresql://postgres:[PASSWORD]@aws-1-eu-central-2.pooler.supabase.com:6543/postgres?pgbouncer=true",
+  
+  // Direct connection for migrations and direct access
+  DIRECT_URL: "postgresql://postgres:[PASSWORD]@aws-1-eu-central-2.supabase.com:5432/postgres",
+  
+  // Test schema for isolated testing
+  TEST_SCHEMA: "test"
+};
 ```
 
-### Docker Compose (Development)
+#### Database Schema Structure
 
-```yaml
-version: '3.8'
-services:
-  backend:
-    build: ./backend
-    ports:
-      - '3000:3000'
-    environment:
-      - NODE_ENV=development
-      - DATABASE_URL=postgresql://user:pass@db:5432/kpidashboard
-    depends_on:
-      - db
-      - redis
+```sql
+-- Main production schema (postgres)
+-- Contains all production data and business logic
 
-  frontend:
-    build: ./frontend
-    ports:
-      - '3001:80'
-    depends_on:
-      - backend
-
-  db:
-    image: postgres:15
-    environment:
-      - POSTGRES_DB=kpidashboard
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=pass
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
-  redis:
-    image: redis:7-alpine
-    ports:
-      - '6379:6379'
+-- Test schema for isolated testing
+CREATE SCHEMA IF NOT EXISTS test;
+GRANT ALL ON SCHEMA test TO postgres;
+GRANT USAGE ON SCHEMA test TO postgres;
 ```
 
-## Kubernetes Deployment
+### Application Deployment
 
-### Production Deployment
+#### Backend Deployment
+
+```typescript
+// Backend service configuration
+const backendConfig = {
+  port: process.env.PORT || 3000,
+  environment: process.env.NODE_ENV || 'development',
+  database: {
+    url: process.env.DATABASE_URL,
+    directUrl: process.env.DIRECT_URL,
+    testSchema: process.env.TEST_SCHEMA
+  },
+  redis: {
+    url: process.env.REDIS_URL || 'redis://localhost:6379'
+  }
+};
+```
+
+#### Frontend Deployment
+
+```typescript
+// Frontend configuration
+const frontendConfig = {
+  port: 3001,
+  apiUrl: process.env.REACT_APP_API_URL || 'http://localhost:3000',
+  environment: process.env.REACT_APP_ENVIRONMENT || 'development'
+};
+```
+
+## Development Environment
+
+### Local Development Setup
+
+```bash
+# No Docker required - database runs in Supabase cloud
+# Only need Node.js and environment variables
+
+# Install dependencies
+npm install
+
+# Set up environment variables
+cp env.example .env
+# Edit .env with your Supabase credentials
+
+# Generate Prisma client
+npm run db:generate
+
+# Run database migrations
+npm run db:migrate
+
+# Start development servers
+npm run dev:backend  # Backend on port 3000
+npm run dev:frontend # Frontend on port 3001
+```
+
+### Testing Environment
+
+```bash
+# Tests use the test schema in Supabase
+# Isolated from production data
+
+# Run tests
+npm test
+
+# Run tests with coverage
+npm run test:coverage
+
+# Run specific test suites
+npm test -- --testPathPattern=metrics
+```
+
+## Production Deployment
+
+### Supabase Production Database
+
+- **Host**: aws-1-eu-central-2.pooler.supabase.com
+- **Port**: 6543 (pooled), 5432 (direct)
+- **Database**: postgres
+- **Schema**: postgres (production), test (testing)
+- **Connection Pooling**: Enabled via pgbouncer
+- **Backup**: Automated daily backups
+- **Monitoring**: Built-in Supabase monitoring
+
+### Application Deployment
 
 ```yaml
+# Example deployment configuration (Kubernetes/Cloud)
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -95,8 +148,13 @@ spec:
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: db-secret
-                  key: url
+                  name: supabase-secret
+                  key: database-url
+            - name: DIRECT_URL
+              valueFrom:
+                secretKeyRef:
+                  name: supabase-secret
+                  key: direct-url
           resources:
             requests:
               memory: '256Mi'
@@ -104,23 +162,6 @@ spec:
             limits:
               memory: '512Mi'
               cpu: '500m'
-```
-
-### Service Configuration
-
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: kpi-dashboard-backend-service
-spec:
-  selector:
-    app: kpi-dashboard-backend
-  ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 3000
-  type: LoadBalancer
 ```
 
 ## CI/CD Pipeline
@@ -138,23 +179,53 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
       - name: Run Tests
         run: npm test
+        env:
+          DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.TEST_DIRECT_URL }}
 
   build:
     needs: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Build Docker Images
-        run: docker build -t kpi-dashboard/backend:${{ github.sha }} ./backend
+      - name: Build Application
+        run: npm run build
 
   deploy:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy to Kubernetes
+      - name: Deploy to Production
         run: |
-          kubectl set image deployment/kpi-dashboard-backend \
-            backend=kpi-dashboard/backend:${{ github.sha }}
+          # Deploy to your cloud platform
+          # Database is already running in Supabase
 ```
+
+## Infrastructure Benefits
+
+### Supabase Advantages
+
+- **No Local Database Setup**: Database runs in cloud
+- **Automatic Scaling**: Handles traffic spikes automatically
+- **Built-in Security**: Row-level security, authentication
+- **Real-time Features**: Built-in real-time subscriptions
+- **Backup & Recovery**: Automated daily backups
+- **Monitoring**: Built-in performance monitoring
+- **Connection Pooling**: Optimized database connections
+
+### Development Benefits
+
+- **Faster Setup**: No Docker containers to manage
+- **Consistent Environment**: Same database in dev/staging/prod
+- **Team Collaboration**: Shared database for team development
+- **Testing Isolation**: Test schema prevents data conflicts
+- **Production Parity**: Development matches production exactly

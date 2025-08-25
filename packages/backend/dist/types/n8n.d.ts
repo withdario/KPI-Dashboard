@@ -1,3 +1,11 @@
+export interface N8nActualPayload {
+    ExecutionID: string;
+    Status: string;
+    Timestamp: string;
+    LeadsGenerated?: number;
+    IndustryBreakdown?: Record<string, number>;
+    [key: string]: any;
+}
 export interface N8nWebhookPayload {
     workflowId: string;
     workflowName: string;

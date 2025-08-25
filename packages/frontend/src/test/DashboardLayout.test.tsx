@@ -2,36 +2,26 @@ import { render, screen } from '../test/setup';
 import { vi } from 'vitest';
 import DashboardLayout from '../components/DashboardLayout';
 
-// Mock DashboardNavigation component
-vi.mock('../components/DashboardNavigation', () => ({
-  default: ({ children }: any) => <div data-testid="dashboard-navigation">{children}</div>
-}));
-
 describe('DashboardLayout', () => {
-  it('renders with title and subtitle', () => {
-    render(
-      <DashboardLayout title="Test Title" subtitle="Test Subtitle">
-        <div>Test content</div>
-      </DashboardLayout>
-    );
-
-    // Check that both desktop and mobile titles are present
-    const titles = screen.getAllByText('Test Title');
-    expect(titles).toHaveLength(2); // Desktop and mobile headers
-    const subtitles = screen.getAllByText('Test Subtitle');
-    expect(subtitles).toHaveLength(2); // Desktop and mobile headers
-    expect(screen.getByText('Test content')).toBeInTheDocument();
-  });
-
-  it('renders without title and subtitle', () => {
+  it('renders with children content', () => {
     render(
       <DashboardLayout>
         <div>Test content</div>
       </DashboardLayout>
     );
 
-    // Should still show the "BI Platform" heading in mobile header
-    expect(screen.getByText('BI Platform')).toBeInTheDocument();
+    expect(screen.getByText('Test content')).toBeInTheDocument();
+  });
+
+  it('renders dashboard title', () => {
+    render(
+      <DashboardLayout>
+        <div>Test content</div>
+      </DashboardLayout>
+    );
+
+    // Check that the dashboard title is present
+    expect(screen.getByText('Business Intelligence Dashboard')).toBeInTheDocument();
     expect(screen.getByText('Test content')).toBeInTheDocument();
   });
 
@@ -45,27 +35,29 @@ describe('DashboardLayout', () => {
     expect(screen.getByText('Test content')).toBeInTheDocument();
   });
 
-  it('renders navigation component', () => {
+  it('renders navigation links', () => {
     render(
       <DashboardLayout>
         <div>Test content</div>
       </DashboardLayout>
     );
 
-    // Should have navigation components (desktop and mobile)
-    const navigationElements = screen.getAllByTestId('dashboard-navigation');
-    expect(navigationElements.length).toBeGreaterThan(0);
+    // Should have navigation links
+    expect(screen.getByText('Dashboard')).toBeInTheDocument();
+    expect(screen.getByText('Business Overview')).toBeInTheDocument();
+    expect(screen.getByText('Analytics')).toBeInTheDocument();
+    expect(screen.getByText('Automation')).toBeInTheDocument();
   });
 
-  it('renders mobile header for small screens', () => {
+  it('renders mobile menu button', () => {
     render(
       <DashboardLayout>
         <div>Test content</div>
       </DashboardLayout>
     );
 
-    // Mobile header should always be visible
-    expect(screen.getByText('BI Platform')).toBeInTheDocument();
+    // Mobile menu button should be visible
+    expect(screen.getByLabelText('Toggle dashboard menu')).toBeInTheDocument();
   });
 
   it('has proper semantic structure', () => {
@@ -80,17 +72,15 @@ describe('DashboardLayout', () => {
     expect(screen.getByRole('main')).toBeInTheDocument(); // main content
   });
 
-  it('renders page header with proper styling', () => {
+  it('renders responsive layout', () => {
     render(
-      <DashboardLayout title="Test Title" subtitle="Test Subtitle">
+      <DashboardLayout>
         <div>Test content</div>
       </DashboardLayout>
     );
 
-    // Check that the page header section exists (both desktop and mobile)
-    const titles = screen.getAllByText('Test Title');
-    expect(titles).toHaveLength(2);
-    const subtitles = screen.getAllByText('Test Subtitle');
-    expect(subtitles).toHaveLength(2);
+    // Check that the main content has responsive spacing
+    const main = screen.getByRole('main');
+    expect(main).toHaveClass('flex-1');
   });
 });

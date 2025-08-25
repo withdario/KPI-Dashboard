@@ -67,6 +67,11 @@ export class N8nService {
       errors.push('Invalid startTime format (must be ISO 8601)');
     }
     
+    // Validate duration if provided
+    if (payload.duration !== undefined && typeof payload.duration !== 'number') {
+      errors.push('duration must be a number');
+    }
+    
     // Optional field warnings
     if (!payload.inputData) {
       warnings.push('inputData is missing (optional but recommended)');
@@ -204,6 +209,17 @@ export class N8nService {
         _count: { status: true }
       });
 
+      if (!stats || stats.length === 0) {
+        // No events found, just update the last webhook time
+        await this.prisma.n8nIntegration.update({
+          where: { id: integrationId },
+          data: {
+            lastWebhookAt: new Date()
+          }
+        });
+        return;
+      }
+
       const totalEvents = stats.reduce((sum, stat) => sum + stat._count.status, 0);
       const successfulEvents = stats.find(stat => stat.status === 'completed')?._count.status || 0;
 
@@ -217,6 +233,7 @@ export class N8nService {
       });
     } catch (error) {
       console.error('Error updating integration stats:', error);
+      // Don't throw error, just log it
     }
   }
 
@@ -231,7 +248,7 @@ export class N8nService {
         take: 100
       });
 
-      if (events.length === 0) {
+      if (!events || events.length === 0) {
         return {
           totalWorkflows: 0,
           successfulWorkflows: 0,

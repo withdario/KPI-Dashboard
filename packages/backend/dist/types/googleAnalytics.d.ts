@@ -35,6 +35,12 @@ export interface GA4MetricsRequest {
     dimensions?: string[];
 }
 export interface GA4MetricsResponse {
+    propertyId: string;
+    startDate: string;
+    endDate: string;
+    metrics: GA4Metrics[];
+    totalRows: number;
+    rowCount: number;
     metricHeaders: Array<{
         name: string;
         type: string;
@@ -50,7 +56,8 @@ export interface GA4MetricsResponse {
             value: string;
         }>;
     }>;
-    rowCount: number;
+    fallback?: boolean;
+    message?: string;
 }
 export interface GoogleAnalyticsError {
     code: string;

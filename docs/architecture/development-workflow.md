@@ -13,11 +13,12 @@ cd kpi-dashboard
 npm install
 
 # Set up environment variables
-cp .env.example .env
-# Edit .env with your configuration
+cp env.example .env
+# Edit .env with your Supabase credentials
 
-# Start development services
-docker-compose up -d
+# No Docker required - database runs in Supabase cloud
+# Generate Prisma client
+npm run db:generate
 
 # Run database migrations
 npm run db:migrate
@@ -32,7 +33,13 @@ npm run dev:frontend # Frontend on :3001
 ```bash
 # Development environment
 NODE_ENV=development
-DATABASE_URL=postgresql://user:pass@localhost:5432/kpidashboard_dev
+# Supabase database with connection pooling
+DATABASE_URL=postgresql://postgres:[PASSWORD]@aws-1-eu-central-2.pooler.supabase.com:6543/postgres?pgbouncer=true
+# Direct connection for migrations
+DIRECT_URL=postgresql://postgres:[PASSWORD]@aws-1-eu-central-2.supabase.com:5432/postgres
+# Test schema for isolated testing
+TEST_SCHEMA=test
+# Local Redis for caching/sessions
 REDIS_URL=redis://localhost:6379
 JWT_SECRET=your-dev-secret-key
 GOOGLE_ANALYTICS_CLIENT_ID=your-ga-client-id
@@ -40,7 +47,10 @@ GOOGLE_ANALYTICS_CLIENT_SECRET=your-ga-client-secret
 
 # Production environment
 NODE_ENV=production
-DATABASE_URL=postgresql://user:pass@prod-db:5432/kpidashboard
+# Same Supabase database (different credentials)
+DATABASE_URL=postgresql://postgres:[PROD-PASSWORD]@aws-1-eu-central-2.pooler.supabase.com:6543/postgres?pgbouncer=true
+DIRECT_URL=postgresql://postgres:[PROD-PASSWORD]@aws-1-eu-central-2.supabase.com:5432/postgres
+# Production Redis (cloud-based)
 REDIS_URL=redis://prod-redis:6379
 JWT_SECRET=your-production-secret-key
 ```
@@ -81,6 +91,24 @@ bugfix branches (hotfixes)
    - Test thoroughly
    - Merge to main and develop
    - Deploy immediately
+
+## Supabase Development Benefits
+
+### Database Management
+
+- **No Local Setup**: Database runs in Supabase cloud
+- **Automatic Migrations**: Prisma handles schema changes
+- **Test Isolation**: Test schema prevents data conflicts
+- **Production Parity**: Development matches production exactly
+- **Team Collaboration**: Shared database for team development
+
+### Development Workflow Advantages
+
+- **Faster Setup**: No Docker containers to manage
+- **Consistent Environment**: Same database across all environments
+- **Real-time Features**: Built-in real-time subscriptions
+- **Built-in Security**: Row-level security, authentication
+- **Automatic Backups**: Daily automated backups
 
 ## Code Standards
 

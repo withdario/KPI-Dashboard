@@ -1,0 +1,86 @@
+# Quality Gate Decision for Story 3.6: User Settings and Personalization
+
+schema: 1
+story: "3.6"
+story_title: "User Settings and Personalization"
+gate: "CONCERNS"
+status_reason: "Core functionality is excellent but 3 acceptance criteria need completion to fully meet story requirements"
+reviewer: "Quinn (Test Architect)"
+updated: "2025-01-30T13:30:00Z"
+
+# No active waiver
+waiver: { active: false }
+
+# Issues identified during review
+top_issues:
+  - id: "UI-001"
+    severity: medium
+    finding: "Data Export/Import UI components not implemented"
+    suggested_action: "Complete UI implementation using existing service layer functionality"
+  - id: "UI-002"
+    severity: medium
+    finding: "Integration Management UI components not implemented"
+    suggested_action: "Complete UI implementation using existing service layer functionality"
+  - id: "UI-003"
+    severity: medium
+    finding: "Privacy and Security UI components not implemented"
+    suggested_action: "Complete UI implementation using existing service layer functionality"
+
+# Risk summary
+risk_summary:
+  totals: { critical: 0, high: 0, medium: 3, low: 0 }
+  recommendations:
+    must_fix: []
+    monitor:
+      - "Complete remaining UI components to meet all acceptance criteria"
+      - "Ensure UI components properly integrate with existing service layer"
+
+# Quality score calculation
+quality_score: 70  # 100 - (10 * 3 CONCERNS) = 70
+
+# Gate expiry (2 weeks from review)
+expires: "2025-02-13T00:00:00Z"
+
+# Evidence from review
+evidence:
+  tests_reviewed: 7
+  risks_identified: 3
+  trace:
+    ac_covered: [1, 2, 3, 4, 7, 8, 9]  # AC numbers with full implementation
+    ac_gaps: [5, 6, 10]  # AC numbers needing completion
+
+# NFR validation
+nfr_validation:
+  security:
+    status: PASS
+    notes: "No security vulnerabilities identified, proper validation implemented"
+  performance:
+    status: PASS
+    notes: "Efficient React patterns, optimized form handling, localStorage persistence"
+  reliability:
+    status: PASS
+    notes: "Comprehensive error handling, loading states, and user feedback"
+  maintainability:
+    status: PASS
+    notes: "Clean architecture, proper separation of concerns, excellent TypeScript usage"
+
+# Recommendations
+recommendations:
+  immediate:  # Must complete to meet story requirements
+    - action: "Implement Data Export/Import UI components"
+      refs: ["packages/frontend/src/components/UserSettingsDashboard.tsx:data-tab"]
+    - action: "Implement Integration Management UI components"
+      refs: ["packages/frontend/src/components/UserSettingsDashboard.tsx:integrations-tab"]
+    - action: "Implement Privacy and Security UI components"
+      refs: ["packages/frontend/src/components/UserSettingsDashboard.tsx:privacy-tab"]
+  future:  # Can be addressed later
+    - action: "Consider adding integration tests for real API calls"
+      refs: ["packages/frontend/src/test/"]
+    - action: "Add performance monitoring for large preference datasets"
+      refs: ["packages/frontend/src/services/userSettingsService.ts"]
+
+# Review history
+history:
+  - at: "2025-01-30T13:30:00Z"
+    gate: CONCERNS
+    note: "Initial review - core functionality excellent, 3 UI components need completion"

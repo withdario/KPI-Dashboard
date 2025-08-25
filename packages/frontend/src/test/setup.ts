@@ -25,6 +25,7 @@ vi.mock('react-hot-toast', () => ({
 vi.mock('lucide-react', () => ({
   BarChart3: ({ className, ...props }: any) => React.createElement('svg', { className, ...props }),
   TrendingUp: ({ className, ...props }: any) => React.createElement('svg', { className, ...props }),
+  TrendingDown: ({ className, ...props }: any) => React.createElement('svg', { className, ...props }),
   Zap: ({ className, ...props }: any) => React.createElement('svg', { className, ...props }),
   Users: ({ className, ...props }: any) => React.createElement('svg', { className, ...props }),
   Settings: ({ className, ...props }: any) => React.createElement('svg', { className, ...props }),
@@ -47,11 +48,20 @@ vi.mock('lucide-react', () => ({
   Linkedin: ({ className, ...props }: any) => React.createElement('svg', { className, ...props }),
   Calendar: ({ className, ...props }: any) => React.createElement('svg', { className, ...props }),
   CheckCircle: ({ className, ...props }: any) => React.createElement('svg', { className, ...props }),
+  XCircle: ({ className, ...props }: any) => React.createElement('svg', { className, ...props }),
   Clock: ({ className, ...props }: any) => React.createElement('svg', { className, ...props }),
   UserPlus: ({ className, ...props }: any) => React.createElement('svg', { className, ...props }),
   Phone: ({ className, ...props }: any) => React.createElement('svg', { className, ...props }),
   Mail: ({ className, ...props }: any) => React.createElement('svg', { className, ...props }),
   MapPin: ({ className, ...props }: any) => React.createElement('svg', { className, ...props }),
+  AlertTriangle: ({ className, ...props }: any) => React.createElement('svg', { className, ...props }),
+  AlertCircle: ({ className, ...props }: any) => React.createElement('svg', { className, ...props }),
+  Info: ({ className, ...props }: any) => React.createElement('svg', { className, ...props }),
+  Search: ({ className, ...props }: any) => React.createElement('svg', { className, ...props }),
+  Filter: ({ className, ...props }: any) => React.createElement('svg', { className, ...props }),
+  RefreshCw: ({ className, ...props }: any) => React.createElement('svg', { className, ...props }),
+  Tag: ({ className, ...props }: any) => React.createElement('svg', { className, ...props }),
+  Download: ({ className, ...props }: any) => React.createElement('svg', { className, ...props }),
 }));
 
 // Create a custom render function that includes ThemeProvider

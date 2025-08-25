@@ -156,6 +156,13 @@ router.post('/integration',
         webhookToken
       });
       
+      if (!integration) {
+        return res.status(500).json({
+          error: 'Creation failed',
+          message: 'Failed to create integration'
+        });
+      }
+      
       // Remove sensitive data from response
       const { webhookToken: token, ...safeIntegration } = integration;
       
@@ -194,7 +201,7 @@ router.put('/integration/:integrationId',
       }
       
       // Check if integration exists
-      const existingIntegration = await n8nService.getIntegration(integrationId);
+      const existingIntegration = await n8nService.getIntegrationById(integrationId);
       if (!existingIntegration) {
         return res.status(404).json({
           error: 'Integration not found',
@@ -209,6 +216,13 @@ router.put('/integration/:integrationId',
       if (isActive !== undefined) updateData.isActive = isActive;
       
       const integration = await n8nService.updateIntegration(integrationId, updateData);
+      
+      if (!integration) {
+        return res.status(500).json({
+          error: 'Update failed',
+          message: 'Failed to update integration'
+        });
+      }
       
       // Remove sensitive data from response
       const { webhookToken: token, ...safeIntegration } = integration;
@@ -249,7 +263,7 @@ router.get('/events/:integrationId',
       }
       
       // Check if integration exists
-      const integration = await n8nService.getIntegration(integrationId);
+      const integration = await n8nService.getIntegrationById(integrationId);
       if (!integration) {
         return res.status(404).json({
           error: 'Integration not found',
@@ -290,7 +304,7 @@ router.get('/metrics/:integrationId',
       const { integrationId } = req.params;
       
       // Check if integration exists
-      const integration = await n8nService.getIntegration(integrationId);
+      const integration = await n8nService.getIntegrationById(integrationId);
       if (!integration) {
         return res.status(404).json({
           error: 'Integration not found',

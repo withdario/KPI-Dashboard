@@ -1,4 +1,3 @@
-import { PrismaClient } from '@prisma/client';
 import { createMockPrismaClient, setupDefaultMocks } from './prisma-mock';
 
 // Create a mock Prisma client for all tests
