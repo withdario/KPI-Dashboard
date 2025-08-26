@@ -44,11 +44,7 @@
   "env": {
     "NODE_ENV": "production"
   },
-  "functions": {
-    "packages/backend/src/index.ts": {
-      "maxDuration": 30
-    }
-  }
+
   
 }
 
