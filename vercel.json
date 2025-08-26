@@ -3,13 +3,17 @@
   "builds": [
     {
       "src": "packages/backend/src/index.ts",
-      "use": "@vercel/node"
+      "use": "@vercel/node",
+      "config": {
+        "outputDirectory": "packages/backend/dist"
+      }
     },
     {
       "src": "packages/frontend/package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "dist"
+        "distDir": "dist",
+        "outputDirectory": "packages/frontend/dist"
       }
     }
   ],
