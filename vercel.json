@@ -3,23 +3,13 @@
   "builds": [
     {
       "src": "packages/backend/src/index.ts",
-      "use": "@vercel/node",
-      "config": {
-        "buildCommand": "cd packages/backend && npm run vercel-build",
-        "includeFiles": [
-          "packages/backend/src/**/*",
-          "packages/backend/prisma/**/*",
-          "packages/backend/package.json"
-        ]
-      }
+      "use": "@vercel/node"
     },
     {
       "src": "packages/frontend/package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "dist",
-        "buildCommand": "cd packages/frontend && npm run build",
-        "installCommand": "npm install"
+        "distDir": "dist"
       }
     }
   ],
@@ -40,12 +30,7 @@
       "src": "/(.*)",
       "dest": "packages/frontend/dist/index.html"
     }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  },
-
-  
+  ]
 }
 
 
