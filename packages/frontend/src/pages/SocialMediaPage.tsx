@@ -1,3 +1,4 @@
+So let's force an automatic restart when deploying via a GitHub push.
 import DashboardLayout from '../components/DashboardLayout';
 import DashboardGrid from '../components/DashboardGrid';
 import DashboardWidget from '../components/DashboardWidget';
