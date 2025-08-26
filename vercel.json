@@ -1,14 +1,11 @@
 {
   "version": 2,
-  "buildCommand": "npm run vercel-build",
-  "outputDirectory": "public",
-  "installCommand": "npm install",
-  "framework": null,
-  "functions": {
-    "packages/backend/src/index.ts": {
-      "runtime": "@vercel/node"
+  "builds": [
+    {
+      "src": "packages/backend/src/index.ts",
+      "use": "@vercel/node"
     }
-  },
+  ],
   "routes": [
     {
       "src": "/api/(.*)",
@@ -20,7 +17,7 @@
     },
     {
       "src": "/(.*)",
-      "dest": "/index.html"
+      "dest": "packages/backend/src/index.ts"
     }
   ]
 }
