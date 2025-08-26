@@ -13,7 +13,7 @@
     "build": "npm run build:backend && npm run build:frontend",
     "build:backend": "cd packages/backend && npm run build",
     "build:frontend": "cd packages/frontend && npm run build",
-    "vercel-build": "npm run build:backend && npm run build:frontend && npm run copy-frontend-to-public",
+    "vercel-build": "pwd && ls -la && npm run build:backend && npm run build:frontend && npm run copy-frontend-to-public && ls -la public/",
     "copy-frontend-to-public": "cp -r packages/frontend/dist/* public/",
     "test": "npm run test:backend && npm run test:frontend",
     "test:backend": "cd packages/backend && npm run test",
