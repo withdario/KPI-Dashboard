@@ -5,6 +5,7 @@
       "src": "packages/backend/src/index.ts",
       "use": "@vercel/node",
       "config": {
+        "buildCommand": "cd packages/backend && npm run vercel-build",
         "includeFiles": [
           "packages/backend/src/**/*",
           "packages/backend/prisma/**/*",
@@ -47,9 +48,8 @@
     "packages/backend/src/index.ts": {
       "maxDuration": 30
     }
-  },
-  "buildCommand": "npm run build",
-  "installCommand": "npm install"
+  }
+  
 }
 
 
