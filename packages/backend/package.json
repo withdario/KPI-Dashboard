@@ -6,7 +6,6 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
-    "vercel-build": "echo 'Skipping TypeScript compilation for Vercel' && echo 'Build completed'",
     "start": "node dist/index.js",
     "test": "jest",
     "test:watch": "jest --watch",
