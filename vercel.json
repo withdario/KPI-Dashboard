@@ -1,8 +1,5 @@
 {
   "version": 2,
-  "buildCommand": "echo 'Build completed'",
-  "outputDirectory": "packages/backend/dist",
-  "installCommand": "npm install",
   "builds": [
     {
       "src": "packages/backend/src/index.ts",
